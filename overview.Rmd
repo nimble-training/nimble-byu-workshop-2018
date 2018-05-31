@@ -1,0 +1,80 @@
+---
+title: "Programming with Hierarchical Statistical Models: An Intro to the BUGS-compatible NIMBLE system"
+subtitle: "BYU Summer Institute on Applied Statistics workshop"
+author: "Chris Paciorek, Department of Statistics, UC Berkeley"
+output:
+  html_document:
+    code_folding: show
+---
+
+# Organization of workshop and materials
+
+Please see the [logistics document](logistics_slides.html) for information about the organization of files, installing NIMBLE, and how we'll run the workshop.
+
+# Workshop content
+
+## Introduction to NIMBLE
+
+ - [Overview of NIMBLE](modules/nimble_background_slides.html)
+ - [The BUGS language](modules/bugs_language_slides.html)
+ - [Building a model in NIMBLE](modules/build_model_slides.html)
+ - [Running an MCMC](modules/run_mcmc_slides.html) 
+ - [Goals and key ideas of NIMBLE](modules/nimble_principles_slides.html)
+
+## MCMC in NIMBLE
+
+ - [MCMC principles](modules/mcmc_principles_slides.html)
+ - [Customizing an MCMC](modules/customizing_mcmc_slides.html)
+ - [MCMC comparison tools](modules/compareMCMC_slides.html)
+ - [Extended example: the litters model](modules/customizing_mcmc_extended_slides.html)
+ - [Exercise: customizing an MCMC](modules/mcmc_exercises_slides.html)
+
+## Writing models in NIMBLE
+
+ - NIMBLE's dialect of BUGS
+ - [Some example models](modules/example_models_slides.html)
+ - [Data and constants](modules/data_constants_slides.html)
+ - Vectorization
+ - [User-defined distributions](modules/user_dist_slides.html) 
+ - Exercise: writing your own distribution
+
+## Introduction to programming in NIMBLE with nimbleFunctions
+
+ - A basic nimbleFunction for compiling R code
+ - Using nimbleFunctions to enable maximum (modules/marginal) likelihood
+ - Reproducible methods and 'programming with models'
+ - [Operating a NIMBLE model](modules/operating_model_slides.html)
+ - [Inspecting model structure](modules/model_structure_slides.html)
+ - Using nimbleFunctions to enable maximum (marginal) likelihood (revisited)
+ - [Posterior predictive sampling using nimbleFunctions](modules/nimbleFunctions_slides.html)
+ - Exercise: writing a nimbleFunction
+
+## Programming MCMC samplers
+
+ - A basic Metropolis-Hastings sampler
+ - More details about the NIMBLE algorithm language (the NIMBLE DSL)
+ - [Writing your own MCMC sampler](modules/user_sampler_slides.html)
+ - [Case study: Variable selection via reversible jump](modules/reversible_jump_slides.html)   
+ - Exercise: writing your own MCMC sampler
+
+## Writing algorithms with Sequential Monte Carlo as an example
+
+ - Introduction to sequential Monte Carlo
+ - NIMBLE's SMC algorithms
+ - Example: stochastic volatility model
+ - Revisiting reproducibile methods
+
+## Bayesian nonparametrics (BNP)
+
+ - Introduction to Dirichlet process models and nonparametric density estimation
+ - BNP in NIMBLE
+ - [Case study: Meta-analysis with nonparametric random effects](modules/meta_analysis_slides.html)
+ - [Case study: Survival analysis via a semiparametric Accelerated Failure Time (AFT) model](modules/survival_analysis_slides.html)
+ - Exercise: writing a BNP model
+
+
+## Extended worked example
+
+# The Legal Stuff
+
+- This material was created by the NIMBLE development team and is licensed under a Creative Commons Attribution 3.0 Unported License. You are free to use, modify, and redistribute any of this material with attribution.
