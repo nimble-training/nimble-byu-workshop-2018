@@ -1,0 +1,8 @@
+Write an "vectorized binomial" distribution that can be used for a vector of $N$ binomial random variables, $r_j \sim binom(p_j, n_j)$.
+
+Now modify the litters model to use this distribution and consider how it affects sampling speed compared to the original model. The nice thing about this is that it avoids the overhead of having a bunch of individual observation nodes in the model. However, when sampling the p's individually, it means the entire likelihood needs to be calculated.
+
+1) See how speed compares under the default MCMC sampler.
+2) See how speed compares under the cross-level MCMC sampler.
+
+Alternatively, write a user-defined zero-inflated Poisson distribution and check that you can use it in a model.

@@ -1,0 +1,130 @@
+---
+title: "Programming with models: Writing nimbleFunctions with models (2)"
+subtitle: "BYU Summer Institute on Applied Statistics workshop"
+author: "NIMBLE Development Team"
+output:
+  html_document:
+    code_folding: show
+---
+
+
+```{r chunksetup, include=FALSE} 
+# include any code here you don't want to show up in the document,
+# e.g. package and dataset loading
+library(methods)  # otherwise new() not being found - weird
+library(nimble)
+read_chunk('chunks.R')
+```
+
+# Components of a nimbleFunction
+
+NIMBLE uses the concept of *two-stage evaluation* from computer science to run a model-specific algorithm based on model-generic algorithm code. The first stage of evaluation specializes the algorithm to the model of interest via *setup* code. The second stage runs the algorithm via *run* code. 
+
+Thus, a nimbleFunction has two parts:
+
+ - setup code: used to tailor the algorithm to a particular model structure. Often this involves determining dependencies amongst nodes in the model and setting up storage using *modelValues*
+ - run code: the guts of the algorithm, written generically so it will apply to any (appropriate) model
+
+Setup code is written as a R function, using R code, usually including NIMBLE's special functions for querying the model structure (see the module *model_structure*). 
+
+Run code is written using the NIMBLE *domain-specific language* (DSL). While this is formally a language distinct from R, you can just think of it as a subset of R, enhanced with some functions for operating on the model (see the module *operating_model*). 
+
+
+# Using `modelValues` objects to store sets of node values for a model
+
+A common need is to store multiple sets of values for model variables, such as MCMC output, sets of particles for a particle filter, or an input sample for importance sampling.
+
+NIMBLE provides a `modelValues` class for this purpose.  A `modelValues` class can be created to hold the variables in a model or any other sets of variables you define.
+
+Like models and algorithms, modelValues objects have uncompiled and compiled versions that can be used in (mostly) the same ways.
+
+# Putting the pieces together
+
+Let's walk through an example where we use all the functionality we've discussed above:
+
+ - querying model structure in setup code
+ - using model calculations in run code
+ - using modelValues storage
+
+We'll do this by writing a generic marginalized sampling nimbleFunction.
+
+Why is this useful?
+
+By marginalizing, we reduce dimensionality so we (generally) reduce the number of computations and (generally) reduce posterior dependence. But we often are interested in inference for the marginalized quantities.
+
+# Example: nimbleFunction for sampling marginalized parameters
+
+We need the samples from the marginalized model, plus a model object for the unmarginalized model.
+
+Let's construct our (generic) nimbleFunction:
+
+```{r nf-marginal}
+margSampler <- nimbleFunction(
+            setup = function(full_model, samples, target) {
+                  ## setup MCMC only for integrated-over nodes
+                  conf <- configureMCMC(full_model, nodes = target)
+                  
+                  ## check everything is conjugate
+                  samplers <- sapply(conf$getSamplers(),
+                     function(x) x$name)
+                  if(length(samplers) != length(grep("conjugate", samplers)))
+                     stop("Not all samplers are conjugate")
+
+                  ## check samples have the all nodes in marginalized model
+                      allNodes <- full_model$getNodeNames(stochOnly = TRUE, includeData = FALSE)
+                      targetNodes <- full_model$expandNodeNames(target)
+                      margNodes <- allNodes[!allNodes %in% targetNodes]
+                      neededVars <- full_model$getVarNames(nodes = margNodes)
+                      margModelVars <- full_model$getVarNames(nodes = dimnames(samples)[[2]])
+                      if(any(!neededVars %in% margModelVars))
+                         stop("Some needed variables not present in modelValues for marginalized model")
+                  
+                  ## create MCMC object and modelValues for full model
+                  mcmc <- buildMCMC(conf)
+                  new_mv = modelValues(full_model, m = 1)
+            }, run = function(samples = double(2)) {
+                  ## dynamically determine how many samples we will get ('samples' might have been updated since setup code was run)
+                  nIts <- dim(samples)[1]
+                  resize(new_mv, nIts)
+
+                  ## sample integrated-over nodes once per thinned iteration of original MCMC
+                  for(i in 1:nIts) {
+                      values(full_model, margModelVars) <<- samples[i, ]
+                      mcmc$run(1, reset = FALSE, progressBar = FALSE)
+                      copy(full_model, new_mv, row = i)
+                  }
+            })
+```
+                  
+
+# Example: litters model
+                
+
+```{r}
+littersMargModel <- nimbleModel(littersMargCode, 
+          data = littersData, constants = littersConsts, inits = littersInits)
+cLittersMargModel <- compileNimble(littersMargModel)
+thin = 10
+littersMargConf <- configureMCMC(littersMargModel, print = TRUE, thin = thin)
+littersMargMCMC <- buildMCMC(littersMargConf)
+cLittersMargMCMC <- compileNimble(littersMargMCMC, project = littersMargModel)
+niter <- 5000
+nburnin <- 1000
+samples <- runMCMC(cLittersMargMCMC, niter, nburnin)
+
+littersModel <- nimbleModel(littersCode, 
+          data = littersData, constants = littersConsts, inits = littersInits)
+cLittersModel <- compileNimble(littersModel)
+
+rMargSampler <- margSampler(littersModel, samples, 'p')
+cMargSampler <- compileNimble(rMargSampler, project = littersModel, showCompilerOutput=T)
+cMargSampler$run()
+fullSamples <- as.matrix(cMargSampler$new_mv)
+```
+
+# Comments
+
+- In general, you should pass uncompiled models and modelValues into nimbleFunction setup code. 
+- In general, you can assume that anything in a nimbleFunction will get compiled, so you don't need to worry about whether the modelValues or any nimbleFunctions you use within a nimbleFunction are compiled or uncompiled.
+
+

@@ -36,6 +36,44 @@ littersModel <- nimbleModel(littersCode,
 
 cLittersModel <- compileNimble(littersModel)
 
+## @knitr littersMarg-code
 
+littersMargCode <- nimbleCode({
+  for (i in 1:G) {
+     for (j in 1:N) {
+     	 # (marginal) likelihood (data model)
+        r[i,j] ~ dbetabin(a[i], b[i], n[i,j])
+     }
+     # prior for hyperparameters
+     a[i] ~ dgamma(1, .001)
+     b[i] ~ dgamma(1, .001)
+   }
+})
 
+## @knitr littersMarg-model
+
+littersMargModel <- nimbleModel(littersMargCode, 
+          data = littersData, constants = littersConsts, inits = littersInits)
+
+## @knitr betabin
+
+dbetabin <- nimbleFunction(
+    run = function(x = double(0), alpha = double(0), beta = double(0), size = double(0), 
+        log = integer(0, default = 0)) {
+        
+        returnType(double(0))
+        logProb <- lgamma(size+1) - lgamma(x+1) - lgamma(size - x + 1) +
+            lgamma(alpha + beta) - lgamma(alpha) - lgamma(beta) +
+            lgamma(x + alpha) + lgamma(size - x + beta) - lgamma(size + alpha + beta)
+        if(log) return(logProb)
+        else return(exp(logProb))
+    })
+
+rbetabin <- nimbleFunction(
+    run = function(n = integer(0), alpha = double(0), beta = double(0), size = double(0)) {
+        returnType(double(0))
+        if(n != 1) print("rbetabin only allows n = 1; using n = 1.")
+        p <- rbeta(1, alpha, beta)
+        return(rbinom(1, size = size, prob = p))
+    })
 

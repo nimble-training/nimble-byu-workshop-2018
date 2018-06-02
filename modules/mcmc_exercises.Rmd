@@ -12,4 +12,6 @@ output:
  - Run an MCMC on your own model
  - Try modifying the scale or propCov arguments to the cross-level sampler (see how we did this for the standard block sampler) and see if that eliminates the initial stickiness of the sampler.
  - Play with different initializations for the block samplers
+ - Run one or more of the MCMC variants with multiple chains and judge convergence based on the Gelman-Rubin diagnostic or other diagnostics you like.
  - Take one of the example models from [here](modules/example_models_slides.html) and run a basic MCMC and try modifying the MCMC configuration.
+

@@ -29,24 +29,23 @@ Please see the [logistics document](logistics_slides.html) for information about
  - [Extended example: the litters model](modules/customizing_mcmc_extended_slides.html)
  - [Exercise: customizing an MCMC](modules/mcmc_exercises_slides.html)
 
+use jags 4.0
+
 ## Writing models in NIMBLE
 
- - NIMBLE's dialect of BUGS
+ - [NIMBLE's dialect of BUGS](modules/nimble_bugs.html)
  - [Some example models](modules/example_models_slides.html)
- - [Data and constants](modules/data_constants_slides.html)
- - Vectorization
  - [User-defined distributions](modules/user_dist_slides.html) 
- - Exercise: writing your own distribution
+ - [Exercise: writing your own distribution](modules/user_dist_exercises.slides.html) 
 
 ## Introduction to programming in NIMBLE with nimbleFunctions
 
- - A basic nimbleFunction for compiling R code
- - Using nimbleFunctions to enable maximum (modules/marginal) likelihood
- - Reproducible methods and 'programming with models'
+ - [A basic nimbleFunction for compiling R code](modules/compile_R_slides.html)
+ - [nimbleFunction example: maximum (modules/marginal) likelihood](modules/basic_nimbleFunction_slides.html) 
+ - [Reproducible methods and 'programming with models'](modules/programming_with_models_slides.html)
  - [Operating a NIMBLE model](modules/operating_model_slides.html)
  - [Inspecting model structure](modules/model_structure_slides.html)
- - Using nimbleFunctions to enable maximum (marginal) likelihood (revisited)
- - [Posterior predictive sampling using nimbleFunctions](modules/nimbleFunctions_slides.html)
+ - [Posterior predictive sampling using nimbleFunctions](modules/full_nimbleFunction_slides.html)
  - Exercise: writing a nimbleFunction
 
 ## Programming MCMC samplers
@@ -59,6 +58,8 @@ Please see the [logistics document](logistics_slides.html) for information about
 
 ## Writing algorithms with Sequential Monte Carlo as an example
 
+(see PdV slides from BayesComp on how NIMBLE SMC works)
+
  - Introduction to sequential Monte Carlo
  - NIMBLE's SMC algorithms
  - Example: stochastic volatility model
@@ -70,6 +71,7 @@ Please see the [logistics document](logistics_slides.html) for information about
  - BNP in NIMBLE
  - [Case study: Meta-analysis with nonparametric random effects](modules/meta_analysis_slides.html)
  - [Case study: Survival analysis via a semiparametric Accelerated Failure Time (AFT) model](modules/survival_analysis_slides.html)
+ - data/constants/NAs? see data_and_constants in enar-2018
  - Exercise: writing a BNP model
 
 
