@@ -40,11 +40,12 @@ Like models and algorithms, modelValues objects have uncompiled and compiled ver
 
 # Putting the pieces together
 
-Let's walk through an example where we use all the functionality we've discussed above:
+Let's walk through an example where we use the functionality we've discussed above and more:
 
  - querying model structure in setup code
- - using model calculations in run code
  - using modelValues storage
+ - using nested nimbleFunctions (in this case using existing algorithm code for an MCMC)
+ - copying into and out of models and modelValues
 
 We'll do this by writing a generic marginalized sampling nimbleFunction.
 
@@ -60,9 +61,9 @@ Let's construct our (generic) nimbleFunction:
 
 ```{r nf-marginal}
 margSampler <- nimbleFunction(
-            setup = function(full_model, samples, target) {
+            setup = function(fullModel, samples, target) {
                   ## setup MCMC only for integrated-over nodes
-                  conf <- configureMCMC(full_model, nodes = target)
+                  conf <- configureMCMC(fullModel, nodes = target, monitors = target)
                   
                   ## check everything is conjugate
                   samplers <- sapply(conf$getSamplers(),
@@ -70,28 +71,35 @@ margSampler <- nimbleFunction(
                   if(length(samplers) != length(grep("conjugate", samplers)))
                      stop("Not all samplers are conjugate")
 
-                  ## check samples have the all nodes in marginalized model
-                      allNodes <- full_model$getNodeNames(stochOnly = TRUE, includeData = FALSE)
-                      targetNodes <- full_model$expandNodeNames(target)
+                  ## check samples have all the nodes in marginalized model
+                      allNodes <- fullModel$getNodeNames(stochOnly = TRUE, includeData = FALSE)
+                      targetNodes <- fullModel$expandNodeNames(target)
                       margNodes <- allNodes[!allNodes %in% targetNodes]
-                      neededVars <- full_model$getVarNames(nodes = margNodes)
-                      margModelVars <- full_model$getVarNames(nodes = dimnames(samples)[[2]])
-                      if(any(!neededVars %in% margModelVars))
-                         stop("Some needed variables not present in modelValues for marginalized model")
+                      neededVars <- fullModel$getVarNames(nodes = margNodes)
+                      margMCMCvars <- fullModel$getVarNames(nodes = dimnames(samples)[[2]])
+                      if(any(!neededVars %in% margMCMCvars))
+                         stop("Some needed variables not present in samples for marginalized model")
                   
                   ## create MCMC object and modelValues for full model
                   mcmc <- buildMCMC(conf)
-                  new_mv = modelValues(full_model, m = 1)
-            }, run = function(samples = double(2)) {
-                  ## dynamically determine how many samples we will get ('samples' might have been updated since setup code was run)
+                  mvSamplesConf  <- conf$getMvSamplesConf(1)
+                  newMV <- modelValues(mvSamplesConf, m = 1)
+            },
+            run = function(samples = double(2)) {
+                  ## dynamically determine how many samples we will get
+                  ## ('samples' might have been updated since setup code was run)
                   nIts <- dim(samples)[1]
-                  resize(new_mv, nIts)
+                  resize(newMV, nIts)
+                  ## the next line is a bug work-around and should not be necessary shortly
+                  samplerExecutionOrder <- nimInteger(1, value = -1)
 
                   ## sample integrated-over nodes once per thinned iteration of original MCMC
                   for(i in 1:nIts) {
-                      values(full_model, margModelVars) <<- samples[i, ]
-                      mcmc$run(1, reset = FALSE, progressBar = FALSE)
-                      copy(full_model, new_mv, row = i)
+                      values(fullModel, margMCMCvars) <<- samples[i, ]
+                      mcmc$run(1, reset = FALSE, progressBar = FALSE,
+                          samplerExecutionOrder = samplerExecutionOrder)
+                          ## again, the 'samplerExecutionOrder argument is only a bug work-around
+                      copy(fullModel, newMV, nodes = targetNodes, row = i)
                   }
             })
 ```
@@ -117,9 +125,9 @@ littersModel <- nimbleModel(littersCode,
 cLittersModel <- compileNimble(littersModel)
 
 rMargSampler <- margSampler(littersModel, samples, 'p')
-cMargSampler <- compileNimble(rMargSampler, project = littersModel, showCompilerOutput=T)
-cMargSampler$run()
-fullSamples <- as.matrix(cMargSampler$new_mv)
+cMargSampler <- compileNimble(rMargSampler, project = littersModel)
+cMargSampler$run(samples)
+fullSamples <- as.matrix(cMargSampler$newMV)
 ```
 
 # Comments

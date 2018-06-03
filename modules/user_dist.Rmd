@@ -113,23 +113,23 @@ littersInits <- list( a = c(2, 2), b=c(2, 2) )
 ```
 
 ```{r, use-dist, fig.width=12, fig.height=6, fig.cap=''}
-littersModel <- nimbleModel(littersCode, 
+littersMargModel <- nimbleModel(littersMargCode, 
           data = littersData, constants = littersConsts, inits = littersInits)
-cLittersModel <- compileNimble(littersModel)
-littersConf <- configureMCMC(littersModel, print = TRUE)
+cLittersMargModel <- compileNimble(littersMargModel)
+littersMargConf <- configureMCMC(littersMargModel, print = TRUE)
 hypers <- c('a[1]', 'b[1]', 'a[2]', 'b[2]')
 for(h in hypers) {
-      littersConf$removeSamplers(h)
-      littersConf$addSampler(target = h, type = 'RW', control = list(log = TRUE))
+      littersMargConf$removeSamplers(h)
+      littersMargConf$addSampler(target = h, type = 'RW', control = list(log = TRUE))
 }
-littersConf$printSamplers()
+littersMargConf$printSamplers()
 
-littersMCMC <- buildMCMC(littersConf)
-cLittersMCMC <- compileNimble(littersMCMC, project = littersModel)
+littersMargMCMC <- buildMCMC(littersMargConf)
+cLittersMargMCMC <- compileNimble(littersMargMCMC, project = littersMargModel)
 niter <- 5000
 nburn <- 1000
 set.seed(1)
-samples <- runMCMC(cLittersMCMC, niter = niter, nburnin = nburn,
+samples <- runMCMC(cLittersMargMCMC, niter = niter, nburnin = nburn,
         inits = littersInits, nchains = 1, samplesAsCodaMCMC = TRUE)
 ```
 
