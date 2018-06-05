@@ -52,7 +52,7 @@ use jags 4.0
 
  - [A basic Metropolis-Hastings sampler](modules/nimbleFunction_samplers_slides.html)
  - [Writing your own MCMC sampler](modules/user_sampler_slides.html)
- - [Exercise: writing your own MCMC sampler](modules/user_samplers_exercises_slides.html)
+ - [Exercise: writing your own MCMC sampler](modules/user_sampler_exercises_slides.html)
 
 ## Writing algorithms with Sequential Monte Carlo as an example
 
@@ -65,12 +65,11 @@ use jags 4.0
 
 ## Bayesian nonparametrics (BNP)
 
- - Introduction to Dirichlet process models and nonparametric density estimation
- - BNP in NIMBLE
+ - [Introduction to Dirichlet process models and nonparametric density estimation](modules/bnp_intro_slides.html)
  - [Case study: Meta-analysis with nonparametric random effects](modules/meta_analysis_slides.html)
  - [Case study: Survival analysis via a semiparametric Accelerated Failure Time (AFT) model](modules/survival_analysis_slides.html)
  - [MCMC samplers revisited: reversible jump for variable selection in the AFT model](modules/reversible_jump_AFT_slides.html)
- - Exercise: writing a BNP model
+ - [Exercise: writing a BNP model](modules/bnp_exercises_slides.html)
 
 ## Extended worked example
 
