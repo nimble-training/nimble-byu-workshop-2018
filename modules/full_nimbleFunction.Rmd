@@ -90,15 +90,11 @@ margSampler <- nimbleFunction(
                   ## ('samples' might have been updated since setup code was run)
                   nIts <- dim(samples)[1]
                   resize(newMV, nIts)
-                  ## the next line is a bug work-around and should not be necessary shortly
-                  samplerExecutionOrder <- nimInteger(1, value = -1)
 
                   ## sample integrated-over nodes once per thinned iteration of original MCMC
                   for(i in 1:nIts) {
                       values(fullModel, margMCMCvars) <<- samples[i, ]
-                      mcmc$run(1, reset = FALSE, progressBar = FALSE,
-                          samplerExecutionOrder = samplerExecutionOrder)
-                          ## again, the 'samplerExecutionOrder argument is only a bug work-around
+                      mcmc$run(1, reset = FALSE, progressBar = FALSE)
                       copy(fullModel, newMV, nodes = targetNodes, row = i)
                   }
             })

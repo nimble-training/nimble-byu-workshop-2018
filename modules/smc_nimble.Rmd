@@ -1,0 +1,68 @@
+---
+title: "Sequential MC methods in NIMBLE"
+subtitle: "BYU Summer Institute on Applied Statistics workshop"
+author: "NIMBLE Development Team"
+output:
+  html_document:
+    code_folding: show
+---
+
+# Stochastic volatility example
+
+Here's a comment SMC example, following Pitt and Shephard (1999). The idea is that financial time series often have time-varying variability that is of interest to financial folks.
+
+Let $r_t$ be the exchange rate at time $t$ and $y_t$ be 100 times the daily log return of the exchange rate, $y_t = 100 (\log(r_t) - \log(r_{t-1}))$. A standard stochastic volatility model is
+
+$$
+y_t = \epsilon_t \beta \exp\left(\frac{x_t}{2}), \epsilon_t \sim N(0,1)
+x_t = \phi x_{t-1} + \nu_t, \nu_t \sim N(0, \sigma^2)
+$$
+
+Here $\beta$ is the constant volatility while $x_t$ is the latent evolving volatility. 
+
+For our basic SMC implementation we'll take $\beta$, $sigma^2$, and $\phi$ to be known values, but we'll do inference on them via particle MCMC in the next module.
+
+# Stochastic volatility BUGS code
+
+```{r, sv-code}
+```
+
+# Stochastic volatility filtering
+
+Now let's create the model and apply and run a bootstrap filter.
+
+```{r, sv-model}
+```
+
+```{r, sv-filter}
+svBootFilter <- buildBootstrapFilter(stochVolModel, nodes = 'x',
+                       control = list(saveAll = TRUE, thresh = .9))
+cSvBootFilter <- compileNimble(svBootFilter, project = stochVolModel)
+cSvBootFilter$run(10000)
+samples <- as.matrix(cSvBootFilter$mvEWSamples) ## equally-weighted samples from filtering distribution
+```
+
+# Stochastic volatility results
+
+```{r, sv-results}
+ts.plot(y)
+mn <- apply(samples, 2, mean)
+qs <- apply(samples, 2, quantile, c(.025, .975))
+ts.plot(mn)
+lines(1:T, qs[1, ], lty = 2)
+lines(1:T, qs[2, ], lty = 2)
+```
+
+[perhaps try out the 'smoothing=TRUE' setting?]
+[if no resampling, in what sense is mvEWsamples equally weighted]
+[why in boot filter do we have new weights not calculated based on old weights]
+
+# SMC algorithm implementation
+
+Our SMC algorithms are implemented using nimbleFunctions (of course!).
+
+Each time step has its own nimbleFunction, because we need to fully model-generic calculations that can't assume any particular structure (and at the moment NIMBLE can't easily store model dependencies for multiple nodes in a single data strucutre).
+
+We'll look directly at the code in [`filtering_bootstrap.R`](modules/filtering_bootstrap.R).
+
+The overall filtering nimbleFunction simply iterates through each individual time step function and builds up the overall likelihood from the time step-specific pieces.

@@ -56,12 +56,10 @@ use jags 4.0
 
 ## Writing algorithms with Sequential Monte Carlo as an example
 
-(see PdV slides from BayesComp on how NIMBLE SMC works)
-
- - Introduction to sequential Monte Carlo
- - NIMBLE's SMC algorithms
- - Example: stochastic volatility model
- - Revisiting reproducibile methods
+ - [Introduction to sequential Monte Carlo](modules/smc_intro_slides.html)
+ - [NIMBLE's SMC algorithms](modules/smc_nimble_slides.html)
+ - [Particle MCMC](modules/particle_mcmc_slides.html)
+ - [Revisiting reproducibile methods](modules/reproducibility_revisited_slides.html)
 
 ## Bayesian nonparametrics (BNP)
 
@@ -71,9 +69,18 @@ use jags 4.0
  - [MCMC samplers revisited: reversible jump for variable selection in the AFT model](modules/reversible_jump_AFT_slides.html)
  - [Exercise: writing a BNP model](modules/bnp_exercises_slides.html)
 
-## Extended worked example
+## Additional topics
+ - Extended worked example, discussion of participant examples, additional time for skipped topics, or additional details on topics.
+ - [Final thoughts](modules/final_thoughts_slides.html)
+ 
+# Acknowledgements and legal stuff
 
+NIMBLE has been funded by:
 
-# The Legal Stuff
+ - NSF Advances in Biological Informatics (DBI-1147230)
+ - NSF Software	Infrastructure for Sustained Innovation	(ACI-155048)
+ - NSF DMS Collaborative Research grant (DMS-1622444)
+ - Google Summer of Code 2015 (Nick Michaud) and 2017 (Colin Lewis-Beck)
+ - Berkeley Institute for Data Science support for Daniel Turek
 
-- This material was created by the NIMBLE development team and is licensed under a Creative Commons Attribution 3.0 Unported License. You are free to use, modify, and redistribute any of this material with attribution.
+This workshop material was created by the NIMBLE development team and is licensed under a Creative Commons Attribution 3.0 Unported License. You are free to use, modify, and redistribute any of this material with attribution.

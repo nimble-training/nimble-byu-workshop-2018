@@ -142,3 +142,9 @@ for(i in 2:3)
 - To quickly combine all steps, use `nimbleMCMC`.
 - To take full control, use `cLittersMCMC$run(niter)`
 - To compare multiple MCMC configurations, we'll learn about `compareMCMCs`.
+
+# Other MCMC tools in NIMBLE
+
+  - WAIC for model comparison
+  - cross-validation
+  - (coming soon) calibrated posterior predictive p-values
