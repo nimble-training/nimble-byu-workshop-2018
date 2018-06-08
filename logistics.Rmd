@@ -21,9 +21,17 @@ Please ask questions and make comments as we go through the material. We will al
 
 # How we'll operate
 
-The workshop will be organized in modules, each of which will be a combination of lecture/demo presentation, in most cases followed by exercises/breakout work.
+The workshop will be organized in modules, each of which will be a combination of presentation (lecture and demos), in most cases followed by exercises/breakout work.
 
 Feel free to work on your own models/methods during the breakout time rather than the questions I pose.
+
+Each module has a set of three files:
+
+ - the underlying R Markdown source file with text and code, e.g., `foo.Rmd`
+ - the HTML slides generated from that R Markdown, e.g., `foo_slides.html`
+ - the slides as a single HTML file, e.g., `foo.html`
+
+If you're curious, you can regenerate the html files using the `make_slides` script, which can be run in a shell as `make_slides foo`.
 
 # Suggestions on how to get the most out of the workshop
 
@@ -46,8 +54,6 @@ A few additional thoughts on my pedagogical philosophy here:
 # RStudio and R Markdown
 
 We'll present most of the material from within RStudio, using R Markdown documents with embedded R code. R Markdown is an extension to the Markdown markup language that makes it easy to write HTML in a simple plain text format.  This allows us to both run the R/NIMBLE code directly as well as compile on-the-fly to an HTML file that can be used for presentation. All files will be available on [Github](https://github.com/paciorek/nimble-byu-2018).  
-
-Note: The files named *foo_slides.html* have individual slides, while the files named *foo.html* have the same content but all on one page.
 
 Warning: in some cases the processing of the R code in the R Markdown is screwy and the slides have error messages that do not occur if you just run the code directly in R or RStudio. 
 
@@ -98,14 +104,9 @@ command line tools of *Xcode* on a Mac.
 
 More details can also be found in Section 4 of the [NIMBLE manual](http://r-nimble.org/manuals/NimbleUserManual.pdf).
 
-(REMOVE THIS)
+For the Bayesian nonparametrics we'll discuss in the meta-analysis and survival model examples, you'll need version 0.6-11 (new on CRAN as of the week of June 11, 2018).
 
-For the Bayesian nonparametrics we'll discuss in the meta-analysis and survival model examples, you'll need a newer version of NIMBLE from our development website. You can obtain this by running the following code from within R:
-
-```
-library(devtools)
-install_github('nimble-dev/nimble/packages/nimble', ref = 'BNP')
-```
+There are a couple other things that we'll demo that have bug fixes as of version 0.6-11, so it's best to install that version.
 
 
 

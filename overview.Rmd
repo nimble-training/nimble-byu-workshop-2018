@@ -11,9 +11,18 @@ output:
 
 Please see the [logistics document](logistics_slides.html) for information about the organization of files, installing NIMBLE, and how we'll run the workshop.
 
-# Workshop content
+# Workshop content: sessions
 
-## Introduction to NIMBLE
+ - Session 1: Introduction to NIMBLE
+ - Session 2: MCMC in NIMBLE
+ - Session 3: Writing models in NIMBLE
+ - Session 4: Introduction to programming in NIMBLE with nimbleFunctions
+ - Session 5: Programming MCMC samplers
+ - Session 6: Writing algorithms with Sequential Monte Carlo as an example
+ - Session 7: Bayesian nonparametrics (BNP)
+ - Session 8: Additional topics
+
+# (Session 1) Introduction to NIMBLE
 
  - [Overview of NIMBLE](modules/nimble_background_slides.html)
  - [The BUGS language](modules/bugs_language_slides.html)
@@ -21,47 +30,45 @@ Please see the [logistics document](logistics_slides.html) for information about
  - [Running an MCMC](modules/run_mcmc_slides.html) 
  - [Goals and key ideas of NIMBLE](modules/nimble_principles_slides.html)
 
-## MCMC in NIMBLE
+# (Session 2) MCMC in NIMBLE
 
  - [MCMC principles](modules/mcmc_principles_slides.html)
  - [Customizing an MCMC](modules/customizing_mcmc_slides.html)
- - [MCMC comparison tools](modules/compareMCMC_slides.html)
+ - [NIMBLE's MCMC comparison tools](modules/compareMCMC_slides.html)
  - [Extended example: the litters model](modules/customizing_mcmc_extended_slides.html)
  - [Exercise: customizing an MCMC](modules/mcmc_exercises_slides.html)
 
-use jags 4.0
-
-## Writing models in NIMBLE
+# (Session 3) Writing models in NIMBLE
 
  - [NIMBLE's dialect of BUGS](modules/nimble_bugs.html)
  - [Some example models](modules/example_models_slides.html)
  - [User-defined distributions](modules/user_dist_slides.html) 
  - [Exercise: writing your own distribution](modules/user_dist_exercises_slides.html) 
 
-## Introduction to programming in NIMBLE with nimbleFunctions
+# (Session 4) Introduction to programming in NIMBLE with nimbleFunctions
 
  - [A basic nimbleFunction for compiling R code](modules/compile_R_slides.html)
- - [nimbleFunction example: maximum (modules/marginal) likelihood](modules/basic_nimbleFunction_slides.html) 
+ - [nimbleFunction example: maximum (marginal) likelihood](modules/basic_nimbleFunction_slides.html) 
  - [Reproducible methods and 'programming with models'](modules/programming_with_models_slides.html)
  - [Operating a NIMBLE model](modules/operating_model_slides.html)
  - [Inspecting model structure](modules/model_structure_slides.html)
  - [Posterior predictive sampling using nimbleFunctions](modules/full_nimbleFunction_slides.html)
  - [Exercise: writing a nimbleFunction](modules/writing_nimbleFunctions_exercises_slides.html)
 
-## Programming MCMC samplers
+# (Session 5) Programming MCMC samplers
 
  - [A basic Metropolis-Hastings sampler](modules/nimbleFunction_samplers_slides.html)
  - [Writing your own MCMC sampler](modules/user_sampler_slides.html)
  - [Exercise: writing your own MCMC sampler](modules/user_sampler_exercises_slides.html)
 
-## Writing algorithms with Sequential Monte Carlo as an example
+# (Session 6) Writing algorithms with Sequential Monte Carlo as an example
 
  - [Introduction to sequential Monte Carlo](modules/smc_intro_slides.html)
  - [NIMBLE's SMC algorithms](modules/smc_nimble_slides.html)
  - [Particle MCMC](modules/particle_mcmc_slides.html)
- - [Revisiting reproducibile methods](modules/reproducibility_revisited_slides.html)
+ - [Revisiting reproducible methods](modules/reproducibility_revisited_slides.html)
 
-## Bayesian nonparametrics (BNP)
+# (Session 7) Bayesian nonparametrics (BNP)
 
  - [Introduction to Dirichlet process models and nonparametric density estimation](modules/bnp_intro_slides.html)
  - [Case study: Meta-analysis with nonparametric random effects](modules/meta_analysis_slides.html)
@@ -69,7 +76,7 @@ use jags 4.0
  - [MCMC samplers revisited: reversible jump for variable selection in the AFT model](modules/reversible_jump_AFT_slides.html)
  - [Exercise: writing a BNP model](modules/bnp_exercises_slides.html)
 
-## Additional topics
+# (Session 8) Additional topics
  - Extended worked example, discussion of participant examples, additional time for skipped topics, or additional details on topics.
  - [Final thoughts](modules/final_thoughts_slides.html)
  
@@ -79,7 +86,7 @@ NIMBLE has been funded by:
 
  - NSF Advances in Biological Informatics (DBI-1147230)
  - NSF Software	Infrastructure for Sustained Innovation	(ACI-155048)
- - NSF DMS Collaborative Research grant (DMS-1622444)
+ - NSF DMS Collaborative Research (DMS-1622444)
  - Google Summer of Code 2015 (Nick Michaud) and 2017 (Colin Lewis-Beck)
  - Berkeley Institute for Data Science support for Daniel Turek
 

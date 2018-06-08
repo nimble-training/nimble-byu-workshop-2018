@@ -23,20 +23,19 @@ We'll use the *litters* model example from BUGS. The data set describes survival
 <center><img src="littersDAG.jpg"></center>
 
 
-
 # Specifying the BUGS code for a model
 
 Here we specify the litters code directly in R. We can walk through some of details via the comments in the BUGS code.
 
 
-```{r, model-code}
+```{r, litters-code}
 library(nimble)
 littersCode <- nimbleCode({
   for (i in 1:G) {
      for (j in 1:N) {
-     	# likelihood (data model)
+        # likelihood (data model)
         r[i,j] ~ dbin(p[i,j], n[i,j])
-	# latent process (random effects)
+        # latent process (random effects)
         p[i,j] ~ dbeta(a[i], b[i]) 
      }
      # prior for hyperparameters
@@ -55,7 +54,8 @@ In BUGS or JAGS, one would provide the model code, input data and constant value
 
 In NIMBLE, you have more fine-grained control over these steps. The first step is to build an R representation of the model.
 
-```{r build-model}
+```{r, litters-model}
+## data and constants as R objects
 G <- 2
 N <- 16
 n <- matrix(c(13, 12, 12, 11, 9, 10, 
@@ -67,7 +67,7 @@ r <- matrix(c(13, 12, 12, 11, 9, 10, 9, 9, 8, 10, 8, 9,
               
 littersConsts <- list(G = G, N = N, n = n)
 littersData <- list(r = r)
-littersInits <- list(a = c(2, 2), b=c(2, 2))
+littersInits <- list( a = c(2, 2), b=c(2, 2) )
 
 ## create the NIMBLE model object
 littersModel <- nimbleModel(littersCode, 
@@ -100,8 +100,8 @@ cLittersModel$calculate('a')   # log-prior density
 cLittersModel$getLogProb('a')
 
 cLittersModel$a <- c(3, 3)
-cLittersModel$calculate('a')   # log-prior density
 cLittersModel$getLogProb('a')
+cLittersModel$calculate('a')   # log-prior density
 
 set.seed(1)  # so the calculations are reproducible
 littersModel$simulate('p')  # simulate from prior

@@ -10,27 +10,26 @@ output:
 ```{r chunksetup, include=FALSE} 
 # include any code here you don't want to show up in the document,
 # e.g. package and dataset loading
-library(methods)  # otherwise new() not being found - weird
+library(methods)  # otherwise new() not being found
 library(nimble)
-read_chunk("chunks.R")
+read_chunk("chunks_litters.R")
 ```
-
 
 # A very basic MCMC
 
 The steps of running an MCMC are as follows:
 
- 1. configure the MCMC
- 2. build the MCMC
- 3. create a compiled version of the MCMC
- 4. run the MCMC
- 5. assess and use the MCMC samples
+ 1. configure the MCMC (via `configureMCMC()`)
+ 2. build the MCMC (via `buildMCMC()`)
+ 3. create a compiled version of the MCMC (via `compileNimble()`)
+ 4. run the MCMC (via `runMCMC()`)
+ 5. assess and use the MCMC samples (e.g., using CODA tools)
 
 Note that we can combine steps 1-4 by using `nimbleMCMC()` (which in fact does not even require you to create the model), but if we want to modify the default MCMC configuration of samplers then we need to separate the steps. We'll see `nimbleMCMC()` a bit later.
 
 # Build the model
 
-We first need to build the model.
+We first need to build the model as we did in the previous module.
 
 ```{r, litters-code}
 ```
@@ -49,13 +48,14 @@ First we *configure* the MCMC, which means setting up the samplers to be used fo
 
 ```{r, prep, echo=FALSE}
 # so attendees can run code below this without using code from other modules
-if(!exists('littersModel') || !exists('cLittersModels')) source('chunks.R')
+if(FALSE) 
+   if(!exists('littersModel') || !exists('cLittersModels')) source('chunks_litters.R')
 ```                   
 
-```{r, conf}
+```{r, configureMCMC}
 littersConf <- configureMCMC(littersModel, print = TRUE)
 ```
-You also specify the nodes for which you'd like to get the MCMC samples as output.
+You also specify the nodes for which you'd like to get the MCMC samples as output. (NIMBLE defaults to only monitoring the "top-level" nodes, i.e, hyperparameters with no stochastic parents.
 
 ```{r, monitor}
 littersConf$addMonitors(c('a', 'b', 'p'))
@@ -70,6 +70,7 @@ littersMCMC <- buildMCMC(littersConf)
 cLittersMCMC <- compileNimble(littersMCMC, project = littersModel)
 ```
 
+(The *project* argument helps us manage all the C++ that is generated for a given analysis. In general the project can be referenced using the name of the original (uncompiled) model.)
 
 # Running the MCMC
 
@@ -126,22 +127,28 @@ Considerations: you'll want to think about how to set up the over-dispersed star
 
 # Assessing MCMC performance from multiple chains
 
-```{r, gelman-rubin, fig.cap='', fig.height=5, fig.width=5}
+```{r, gelman-rubin, fig.cap='', fig.height=6, fig.width=12}
 par(mfrow = c(1,1))
 gelman.diag(samples)
 ## and here's a graphical representation of the information
+par(mfrow = c(1, 2))
 ts.plot(samples[[1]][ , 'a[1]'], xlab = 'iteration',
      ylab = expression(a[1]), main = expression(a[1]))
 sq <- seq_along(samples[[1]][ , 'a[1]'])
 for(i in 2:3)
       lines(sq, samples[[i]][ , 'a[1]'], col = i)
+ts.plot(samples[[1]][ , 'b[1]'], xlab = 'iteration',
+     ylab = expression(b[1]), main = expression(a[1]))
+sq <- seq_along(samples[[1]][ , 'b[1]'])
+for(i in 2:3)
+      lines(sq, samples[[i]][ , 'b[1]'], col = i)
 ```
 
 # Other ways to run MCMC
 
-- To quickly combine all steps, use `nimbleMCMC`.
+- To quickly combine all steps, use `nimbleMCMC()`.
 - To take full control, use `cLittersMCMC$run(niter)`
-- To compare multiple MCMC configurations, we'll learn about `compareMCMCs`.
+- To compare multiple MCMC configurations, we'll learn about `compareMCMCs()`.
 
 # Other MCMC tools in NIMBLE
 

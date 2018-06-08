@@ -11,6 +11,8 @@ output:
 
 **We have post-doc funding!**
 
+**We have funding to bring selected users to Berkeley for intensive collaboration**
+
  - Announcements: [nimble-announce Google site](https://groups.google.com/forum/#!forum/nimble-announce)
  - User	support/discussion: [nimble-users Google site](https://groups.google.com/forum/#!forum/nimble-users)
  - Write an algorithm using NIMBLE!	

@@ -39,8 +39,10 @@ Here are some of the features you can do in NIMBLE that we are most excited abou
 # Why Not NIMBLE?
 
 * For MCMCs that rely heavily on Gibbs sampling, JAGS may be a bit faster because of more efficient internal implementation of the calculations.
-* For certain model structures, Hamiltonian Monte Carlo, such as implemented in Stan, may work better than the default MCMC samplers in NIMBLE (but in a number of examples we've tried we've been able to achieve comparable or better performance either out-of-the-box or with some relatively simple modifications to the model or the MCMC samplers).
-* NIMBLE can take a long time to build models that have tens of thousands or more nodes (though once built, the algorithm run times can be quite good). We anticipate big improvements in future versions of NIMBLE.
+* For certain model structures, Hamiltonian Monte Carlo, such as implemented in Stan, may work better than the default MCMC samplers in NIMBLE.
+  - That said, in a number of examples we've tried we've been able to achieve comparable or better performance either out-of-the-box or with some relatively simple modifications to the model or the MCMC samplers.
+  - And yet, sometimes customization is time-consuming and requires specialized knowledge.
+* NIMBLE can take a long time to build algorithms for models that have tens of thousands or more nodes (though once built, the algorithm run times can be quite good). We anticipate big improvements in future versions of NIMBLE.
 
 # What are my other options? 
 
@@ -65,8 +67,7 @@ And you can feel free to email Chris Paciorek directly given your participation 
 
 # Participating in NIMBLE
 
-* File bug reports or feature requests as [Github issues](https://github.com/nimble-dev).
 * Email [nimble.stats@gmail.com](the NIMBLE development team) if you're interested in participating in the development of NIMBLE. 
-* We have an NSF grant for further software development of the NIMBLE core code, and we're looking for a good programmer or postdoc.
+* We have an NSF grant for further software development of the NIMBLE core code, and **we're looking for a good programmer or postdoc**.
 * Develop an algorithm using NIMBLE and either share it with us (e.g., by a Git pull request or more informally) or develop an R package that depends on NIMBLE.
 * We have funding to bring selected users to Berkeley for intensive collaboration; contact us if you have an interesting use for NIMBLE in mind and want to explore possibilities with us.
