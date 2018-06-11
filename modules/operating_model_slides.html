@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta name="generator" content="pandoc" />
   <meta name="author" content="NIMBLE Development Team" />
-  <title>Automated MCMC comparison</title>
+  <title>Programming with models: Operating a model</title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
 div.sourceCode { overflow-x: auto; }
@@ -50,104 +50,148 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </head>
 <body>
 <div class="slide titlepage">
-  <h1 class="title">Automated MCMC comparison</h1>
+  <h1 class="title">Programming with models: Operating a model</h1>
   <h1 class="subtitle">BYU Summer Institute on Applied Statistics workshop</h1>
   <p class="author">
 NIMBLE Development Team
   </p>
 </div>
-<div id="automating-mcmc-comparisons-in-nimble" class="slide section level1">
-<h1>Automating MCMC comparisons in NIMBLE</h1>
-<ul>
-<li>NIMBLE provides tools to automatically compare MCMC efficiency across methods.</li>
-<li>Methods can include different NIMBLE MCMC configurations as well as JAGS, OpenBUGS/WinBUGS (not tested much) and Stan (separate code required).</li>
-<li>We will use <code>compareMCMCs()</code>, which calls <code>MCMCsuite()</code> internally.</li>
-<li><code>MCMCsuite()</code> can be used directly as well.</li>
-</ul>
+<div id="overview" class="slide section level1">
+<h1>Overview</h1>
+<p>We've seen nimbleFunctions in several contexts so far, including an example in which we queried model structure and used NIMBLE's built-in methods for doing calculations with a model. In this module, we'll explore doing general calculations with a model.</p>
+<p>We'll start with how one can treat the model as an object that you can manipulate. Even without further NIMBLE programming this can be useful for exploring a model or for setting up simulations with a model.</p>
 </div>
-<div id="example-metropolis-hastings-vs-slice-sampling.-nimble-vs.-jags." class="slide section level1">
-<h1>Example: Metropolis-Hastings vs slice sampling. NIMBLE vs. JAGS.</h1>
+<div id="running-example-the-litters-model" class="slide section level1">
+<h1>Running example: the litters model</h1>
+<p>We first need to build the model as usual.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(nimble)
+littersCode &lt;-<span class="st"> </span><span class="kw">nimbleCode</span>({
+  for (i in <span class="dv">1</span>:G) {
+     for (j in <span class="dv">1</span>:N) {
+        <span class="co"># likelihood (data model)</span>
+        r[i,j] ~<span class="st"> </span><span class="kw">dbin</span>(p[i,j], n[i,j])
+        <span class="co"># latent process (random effects)</span>
+        p[i,j] ~<span class="st"> </span><span class="kw">dbeta</span>(a[i], b[i]) 
+     }
+     <span class="co"># prior for hyperparameters</span>
+     a[i] ~<span class="st"> </span><span class="kw">dgamma</span>(<span class="dv">1</span>, .<span class="dv">001</span>)
+     b[i] ~<span class="st"> </span><span class="kw">dgamma</span>(<span class="dv">1</span>, .<span class="dv">001</span>)
+   }
+})</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## data and constants as R objects
+G &lt;-<span class="st"> </span><span class="dv">2</span>
+N &lt;-<span class="st"> </span><span class="dv">16</span>
+n &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">13</span>, <span class="dv">12</span>, <span class="dv">12</span>, <span class="dv">11</span>, <span class="dv">9</span>, <span class="dv">10</span>, 
+              <span class="dv">9</span>, <span class="dv">9</span>, <span class="dv">8</span>, <span class="dv">11</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">13</span>, <span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">5</span>, <span class="dv">9</span>, <span class="dv">9</span>, <span class="dv">13</span>, 
+              <span class="dv">7</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">7</span>, <span class="dv">6</span>, <span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">7</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)
+r &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">13</span>, <span class="dv">12</span>, <span class="dv">12</span>, <span class="dv">11</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">9</span>, <span class="dv">9</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">8</span>, <span class="dv">9</span>, 
+     <span class="dv">12</span>, <span class="dv">9</span>, <span class="dv">11</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">7</span>, <span class="dv">11</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">3</span>, <span class="dv">7</span>, <span class="dv">3</span>, <span class="dv">7</span>, <span class="dv">0</span>), 
+     <span class="dt">nrow =</span> <span class="dv">2</span>)
+              
+littersConsts &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">G =</span> G, <span class="dt">N =</span> N, <span class="dt">n =</span> n)
+littersData &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">r =</span> r)
+littersInits &lt;-<span class="st"> </span><span class="kw">list</span>( <span class="dt">a =</span> <span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">2</span>), <span class="dt">b=</span><span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">2</span>) )
+
+## create the NIMBLE model object
+littersModel &lt;-<span class="st"> </span><span class="kw">nimbleModel</span>(littersCode, 
+          <span class="dt">data =</span> littersData, <span class="dt">constants =</span> littersConsts, <span class="dt">inits =</span> littersInits)</code></pre></div>
+<pre><code>## defining model...</code></pre>
+<pre><code>## building model...</code></pre>
+<pre><code>## setting data and initial values...</code></pre>
+<pre><code>## running calculate on model (any error reports that follow may simply reflect missing values in model variables) ... 
+## checking model sizes and dimensions... This model is not fully initialized. This is not an error. To see which variables are not initialized, use model$initializeInfo(). For more information on model initialization, see help(modelInitialization).
+## model building finished.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cLittersModel &lt;-<span class="st"> </span><span class="kw">compileNimble</span>(littersModel)</code></pre></div>
+<pre><code>## compiling... this may take a minute. Use 'showCompilerOutput = TRUE' to see C++ compiler details.</code></pre>
+<pre><code>## compilation finished.</code></pre>
+</div>
+<div id="nodes-and-variables" class="slide section level1">
+<h1>Nodes and variables</h1>
+<p>The parameters and data in a model are represented as nodes in a graph. Here we define some terms:</p>
 <ul>
-<li><code>compareMCMCs</code> and <code>MCMCsuite</code> need to build and compile the model themselves.
+<li>parameter: an unknown quantity in the model that is represented as a random variable and will generally be estimated in an algorithm, e.g. <code>a[1]</code> in the litters model</li>
+<li>data: a known quantity in a model, also represented as a random variable, e.g., <code>r[1,1], r[1,2], ...</code> in the litters model</li>
+<li>constants: other fixed quantities involved in the model, e.g., <code>N</code> in the litters model</li>
+<li>node: an element in the model graph representing data, parameter, or a deterministic quantity that is a function of other quantities in the model, e.g., <code>a[1]</code>, <code>p[1, 1]</code> or <code>p[1, 2]</code> in the litters model.
 <ul>
-<li>(This may become more flexible in the future.)</li>
+<li>One node is created for each <code>~</code> or <code>&lt;-</code> in BUGS code, with multiple nodes created when these are in a for loop.</li>
 </ul></li>
-<li>These functions provide a variety of pre-defined MCMC configurations and a system for providing your own.</li>
-<li>I will illustrate using slice samplers instead of the default Metropolis-Hastings samplers for <code>a</code> and <code>b</code> in the litters model.</li>
+<li>variable: a collection of one or more nodes with the same name, e.g., <em>r</em>, <em>p</em>, or <em>a</em> in the litters model</li>
 </ul>
-<p>Here's how we set things up to provide a customized MCMC configuration as one of the comparisons.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersInfo &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">code =</span> littersCode,
-                   <span class="dt">constants =</span> littersConsts,
-                   <span class="dt">data =</span> littersData, <span class="dt">inits =</span> littersInits)
-
-## A function to replace default samplers with slice
-## samplers for requested nodes
-configureSlice &lt;-<span class="st"> </span>function(Rmodel, nodes) {
-    MCMCconf &lt;-<span class="st"> </span><span class="kw">configureMCMC</span>(Rmodel) ## get a default configuration
-    ## print default samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    for(node in nodes) {
-        MCMCconf$<span class="kw">removeSamplers</span>(node)
-        MCMCconf$<span class="kw">addSampler</span>(<span class="dt">target =</span> node, <span class="dt">type =</span> <span class="st">&quot;slice&quot;</span>)
-    }
-    ## print modified samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    MCMCconf
-}
-
-## A configuration list for compareMCMCs
-MCMCdefs &lt;-<span class="st"> </span><span class="kw">list</span>(
-    <span class="dt">nimble_slice =</span> <span class="kw">quote</span>({
-        ## This code will be evaluated in an environment
-        ## where 'Rmodel' is the model.
-        nodes &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">'a[1]'</span>,<span class="st">'a[2]'</span>,<span class="st">'b[1]'</span>,<span class="st">'b[2]'</span>)
-        MCMCconf &lt;-<span class="st"> </span><span class="kw">configureMCMC</span>(Rmodel) ## get a default configuration
-        ## print default samplers for illustration
-        MCMCconf$<span class="kw">printSamplers</span>(nodes)
-        for(node in nodes) {
-                 MCMCconf$<span class="kw">removeSamplers</span>(node)
-                 MCMCconf$<span class="kw">addSampler</span>(<span class="dt">target =</span> node, <span class="dt">type =</span> <span class="st">&quot;slice&quot;</span>)
-        }
-        ## print modified samplers for illustration
-        MCMCconf$<span class="kw">printSamplers</span>(nodes)
-        MCMCconf
-    })
-)</code></pre></div>
 </div>
-<div id="running-mcmcsuite-and-comparemcmcs" class="slide section level1">
-<h1>Running MCMCsuite and compareMCMCs</h1>
-<p>You can either use <code>MCMCsuite()</code> or <code>compareMCMCs()</code>. The latter allows you to print out some nice html plots of the comparisons.</p>
-<p>(I'm not showing the output here as the functions are not really designed to interface with compiling an R Markdown document.)</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersComparisons &lt;-<span class="st"> </span><span class="kw">compareMCMCs</span>(
-    littersInfo,
-    <span class="dt">MCMCs =</span> <span class="kw">c</span>(<span class="st">&quot;jags&quot;</span>, <span class="st">&quot;nimble&quot;</span>, <span class="st">&quot;nimble_slice&quot;</span>),
-    <span class="dt">MCMCdefs =</span> MCMCdefs,
-    <span class="dt">monitors =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>),
-    <span class="dt">niter =</span> <span class="dv">10000</span>,
-    <span class="dt">burnin =</span> <span class="dv">1000</span>,
-    <span class="dt">summary =</span> <span class="ot">FALSE</span>)
-
-## or here is the MCMCsuite call
-littersResults &lt;-<span class="st"> </span><span class="kw">MCMCsuite</span>(
-               littersCode,
-               <span class="dt">constants =</span> littersConsts,
-               <span class="dt">data =</span> littersData,
-               <span class="dt">inits =</span> littersInits,
-               <span class="dt">MCMCs =</span> <span class="kw">c</span>(<span class="st">&quot;jags&quot;</span>, <span class="st">&quot;nimble&quot;</span>, <span class="st">&quot;nimble_slice&quot;</span>),
-               <span class="dt">MCMCdefs =</span> MCMCdefs,
-               <span class="dt">monitors =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>),
-               <span class="dt">niter =</span> <span class="dv">10000</span>,
-               <span class="dt">burnin =</span> <span class="dv">1000</span>)</code></pre></div>
+<div id="values-in-the-model" class="slide section level1">
+<h1>Values in the model</h1>
+<p>What's the current value in a variable?</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$r  </code></pre></div>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13]
+## [1,]   13   12    9    9    8    8   12   11    9     9     8    11     4
+## [2,]   12   11   10    9   10    9    9    8    8     4     7     4     5
+##      [,14] [,15] [,16]
+## [1,]     5     7     7
+## [2,]     3     3     0</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$a[<span class="dv">1</span>]</code></pre></div>
+<pre><code>## [1] 2</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$p</code></pre></div>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13]
+## [1,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA    NA    NA    NA
+## [2,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA    NA    NA    NA
+##      [,14] [,15] [,16]
+## [1,]    NA    NA    NA
+## [2,]    NA    NA    NA</code></pre>
+<p>Setting values:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$a[<span class="dv">1</span>] &lt;-<span class="st"> </span><span class="dv">5</span>
+littersModel$a</code></pre></div>
+<pre><code>## [1] 5 2</code></pre>
 </div>
-<div id="viewing-the-comparisons" class="slide section level1">
-<h1>Viewing the comparisons</h1>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">make_MCMC_comparison_pages</span>(littersComparisons,
-                           <span class="dt">dir =</span> <span class="st">&quot;litters_comparison_results&quot;</span>,
-                           <span class="dt">modelNames =</span> <span class="st">&quot;littersComparisons&quot;</span>)</code></pre></div>
-<p>The results are <a href="litters_comparison_results/littersComparisons.html">here</a>.</p>
+<div id="operating-the-model-simulate" class="slide section level1">
+<h1>Operating the model: <em>simulate()</em></h1>
+<p>We have control over the model. In particular, for every node, NIMBLE provides <em>calculate()</em> and <em>simulate()</em> functions that calculate the current probability density value for the node and simulate a new value for the node from its (prior) distribution (i.e., given only parent nodes). These operations lie at the heart of many algorithms.</p>
+<p><em>simulate()</em> puts new values into the model; if you want to see those values, you need to look into the model.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1</span>)  <span class="co"># so the calculations are reproducible</span>
+littersModel$<span class="kw">simulate</span>(<span class="st">'p'</span>)  <span class="co"># simulate from prior</span>
+littersModel$p</code></pre></div>
+<pre><code>##           [,1]      [,2]      [,3]      [,4]      [,5]       [,6]
+## [1,] 0.8245287 0.6757412 0.8543998 0.6430392 0.8523471 0.60556010
+## [2,] 0.7221339 0.6639406 0.7458808 0.7124073 0.5210273 0.06657146
+##           [,7]      [,8]      [,9]     [,10]     [,11]     [,12]     [,13]
+## [1,] 0.5417732 0.7720289 0.3242761 0.6289724 0.8237412 0.9729561 0.4351326
+## [2,] 0.6707607 0.4841694 0.4561155 0.1392273 0.3669903 0.6166486 0.8403967
+##          [,14]     [,15]     [,16]
+## [1,] 0.7232747 0.7175444 0.4861039
+## [2,] 0.4710227 0.6083624 0.4848245</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$<span class="kw">getLogProb</span>(<span class="st">'p'</span>)  <span class="co"># log prob not yet updated!</span></code></pre></div>
+<pre><code>## [1] NA</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$<span class="kw">calculate</span>(<span class="st">'p'</span>)   <span class="co"># update it</span></code></pre></div>
+<pre><code>## [1] 8.640757</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$<span class="kw">getLogProb</span>(<span class="st">'p'</span>)  <span class="co"># now we're good</span></code></pre></div>
+<pre><code>## [1] 8.640757</code></pre>
+<p><strong>Question</strong>: The NIMBLE developers chose to not automatically recalculate density values when a node's value changes nor deterministic dependent nodes when a parent node changes. We can discuss the the design considerations in making that choice and the advantages and disadvantages of the choice.</p>
 </div>
-<div id="add-stan-and-jags-for-litters" class="slide section level1">
-<h1>Add Stan and JAGS for litters?</h1>
+<div id="operating-the-model-calculate" class="slide section level1">
+<h1>Operating the model: <em>calculate()</em></h1>
+<p>Let's change values in the model and recalculate the density values. NIMBLE sometimes introduces hidden nodes not specified in the model, so when calculating model density values, it's best to ask NIMBLE to do so based on the dependencies of the altered node.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$<span class="kw">getLogProb</span>(<span class="st">'p'</span>)</code></pre></div>
+<pre><code>## [1] 8.640757</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$a[<span class="dv">1</span>] &lt;-<span class="st"> </span><span class="dv">1</span>
+littersModel$b[<span class="dv">1</span>] &lt;-<span class="st"> </span><span class="dv">3</span>
+littersModel$<span class="kw">getLogProb</span>(<span class="st">'p'</span>)  <span class="co"># recall why this hasn't changed yet</span></code></pre></div>
+<pre><code>## [1] 8.640757</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## littersModel$calculate('p')  ## DON'T DO THIS (though it's ok to do here...)
+littersModel$<span class="kw">calculate</span>(littersModel$<span class="kw">getDependencies</span>(<span class="kw">c</span>(<span class="st">'a[1]'</span>,<span class="st">'b[1]'</span>)))</code></pre></div>
+<pre><code>## [1] -39.12377</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## or we could just update the entire model to be safe:
+## littersModel$calculate()
+littersModel$<span class="kw">getLogProb</span>(<span class="st">'p'</span>)</code></pre></div>
+<pre><code>## [1] -22.69257</code></pre>
+<p>In the next module we will:</p>
+<ul>
+<li>see much more about querying model structure in addition to <code>getDependencies</code></li>
+<li>see why one shouldn't call <code>calculate</code> without querying the model structure</li>
+</ul>
+</div>
+<div id="compiled-execution" class="slide section level1">
+<h1>Compiled execution</h1>
+<p>All of what we've done works (and much more quickly for larger models) with the compiled version of a NIMBLE model.</p>
 </div>
 </body>
 </html>

@@ -11,27 +11,28 @@ output:
 ```{r setup, include=FALSE} 
 library(methods) ## needed only when building documents outside of R
 library(nimble)
+source("chunks_litters.R")
 ```
 
 # How NIMBLE is the same as BUGS and JAGS
 
 * Most distributions and functions are supported
 
-    - For distributions, see [User Manual Section 5.2.4](../NimbleUserManual.pdf#page=39)
-    - For function, see  [User Manual Section 5.2.5](../NimbleUserManual.pdf#page=44)
+    - For distributions, see [User Manual Section 5.2.4](http://r-nimble.org/manuals/NimbleUserManual.pdf#page=39)
+    - For functions, see  [User Manual Section 5.2.5](http://r-nimble.org/manuals/NimbleUserManual.pdf#page=44)
 	
 * Most syntax is supported
 
     - Truncation syntax is different when using `nimbleCode`.  (It can
-      be the same as for JAGS if reading code from a file with `readBUGSmodel`).
+      be the same as for JAGS if reading code from a file with `readBUGSmodel()`).
 
 # How NIMBLE extends BUGS
 
   - Alternative distribution parameterizations (like R).
   - Named parameters (like R).
-  - Vectorized math and linear algebra
-  - Definition-time if-then-else (multiple model variants from the same code)
-  - User-defined functions and distributions
+  - Vectorized math and linear algebra.
+  - Definition-time if-then-else (multiple model variants from the same code).
+  - User-defined functions and distributions.
 
 ### How NIMBLE is limited compared to BUGS and/or JAGS:
 
@@ -42,7 +43,7 @@ library(nimble)
 
 Note named parameters in distributions.
 
-```{r, litters-model, eval=FALSE}
+```{r, litters-model-param, eval=FALSE}
 
 littersCode <- nimbleCode({
   for (i in 1:G) {
@@ -71,18 +72,25 @@ We will cover this in depth later.
 
     - Constants are values needed to define model relationships
 
-        - Index ranges like `N`
-        - Constant indexing vectors
+        - Index ranges like *N* in the litters model
+        - Constant vectors used for indexing: e.g., *block* in `mu[block[i]]`
 
 - Data can be provided to `nimbleModel` or later
 
-    - Data represents a flag on the role nodes play in the model
+    - Data represents a flag on the role graph nodes play in the model
 
-        - e.g. Data nodes shouldn't be sampled
+        - Data nodes shouldn't be sampled in an MCMC
 
     - Data values can be changed.
 
-Example
+Here's an example:
+
+```{r, prep, echo=FALSE}
+# so attendees can run code below this without using code from other modules
+# if(!exists('littersModel') || !exists('cLittersModels')) source('chunks_litters.R')
+```                   
+
+
 ```{r, data-example}
 littersModel$isData('r')
 littersModel$isData('p')
@@ -100,13 +108,13 @@ littersModel$r
 
 # Constants vs. right-hand side nodes
 
-Regression predictors (i.e., covariates or independent variables) can be treated either as constants or as nodes in the model. The latter allows one to change the values after the model is built. 
+Regression predictors (i.e., covariates or independent variables) can be treated either as constants or as variables in the model. The latter allows one to change the values after the model is built. 
 
-When a variable is specified only on the right-hand side of expression(s) in the model, it does not become a node in the model because it is not a parameter or data, but it is a variable in the model that can be assigned new values. 
+When a variable is specified only on the right-hand side of expression(s) in the model, it does not become a graph node in the model because it is not a parameter or data, but it is a variable in the model that can be assigned new values. 
 
-(They can also be specified as *data* though they do not play the role of data in terms of the likelihood.)
+(Regression predictors can also be specified as *data* though they do not play the role of data in terms of the likelihood.)
 
-# More explicit need to provide dimensions
+# More explicit need to provide dimensions (in models, not in nimbleFunctions)
 
 - Square brackets must always be provided to indicate number of dimensions
 
@@ -120,6 +128,7 @@ When a variable is specified only on the right-hand side of expression(s) in the
 # Vectorized math and linear algebra
 
 Instead of writing this in your model code:
+
 ```{r, vectorized-1}
 nimbleOptions(verbose = FALSE)
 m1 <- nimbleModel(
@@ -170,7 +179,7 @@ code <- nimbleCode({
     sigma ~ dunif(0, 10)
     beta0 ~ dnorm(0, sd = 1000)
     beta1 ~ dnorm(0, sd = 1000)
-    if(INCLUDE_X2) {beta2 ~ dnorm(0, sd = 1000)} else{}
+    if(INCLUDE_X2) { beta2 ~ dnorm(0, sd = 1000) } else {}
     for(i in 1:10) {
         if(INCLUDE_X2) {
             y[i] ~ dnorm(beta0 + beta1 * x1[i] + beta2 * x2[i], sd = sigma)

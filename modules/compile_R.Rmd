@@ -1,6 +1,6 @@
 ---
 title: "Compiling parts of R using nimbleFunctions"
-subtitle: "NIMBLE training materials module"
+subtitle: "BYU Summer Institute on Applied Statistics workshop"
 author: "NIMBLE Development Team"
 output:
   html_document:
@@ -11,8 +11,7 @@ output:
 ```{r chunksetup, include=FALSE} 
 # include any code here you don't want to show up in the document,
 # e.g. package and dataset loading
-if(!('modules' %in% unlist(strsplit(getwd(), split = '/')))) setwd('modules')
-library(methods)  # otherwise new() not being found - weird
+library(methods)  # otherwise new() not being found
 library(nimble)
 ```
 
@@ -20,9 +19,11 @@ library(nimble)
 
 While nimbleFunctions are primarily designed to write algorithms to be applied to hierarchical models, you can also use nimbleFunctions as a way to compile your R code to fast C++ code without needing to write any C++ code. Note that this is unlike Rcpp, which provides tools for you to more easily write C++ code that can be called from R.
 
+We've seen this use of nimbleFunctions already in our user-defined distributions. We'll explore this a bit more before seeing the additional details of how to interact with models.
+
 # Uses of this functionality
 
-How might you use this functionality?  Basically, this is useful for math-focused code that can't be easily vectorized. 
+How might you use this functionality?  Basically, this is useful for math-focused code that can't be easily vectorized in R. 
 
 Caveats:
 
@@ -33,7 +34,7 @@ Caveats:
 
 Consider the following, fully-vectorized calculation in R:
 
-```{r, vec-multicalc}
+```{r, vec-multicalc, eval=FALSE}
 out <- exp(cos(sin(x)) + x^3)
 ```
 
@@ -79,6 +80,8 @@ nimMath2 <- nimbleFunction(
 cNimMath2 <- compileNimble(nimMath2)
 ```
 
+For discussion: what does it mean to use vectorization in Eigen and does it suffer from the same use of temporary variables as discussed above in the R context?
+
 # Bake-off
 
 ```{r, nf-bake-off}
@@ -107,7 +110,7 @@ $$
 Suppose we know $\beta$. In order to determine $p$ we could use Monte Carlo simulation to estimate this integral:
 $P(Y = 1) = \int_{-\infty}^0 f(w) dw$.
 
-Now for probit regression, we could just use standard methods to compute normal pdf integrals. But for the multinomial extension we discuss next, we need Monte Carlo simulation.
+Now for probit regression, we could just use standard methods to compute normal pdf integrals (e.g., as implemented in `pnorm()`. But for the multinomial extension we discuss next, we need Monte Carlo simulation.
 
 # Multinomial probit regression
 
@@ -121,7 +124,7 @@ $$
 
 where the `arg max` is simply the $k$ that corresponds to the largest $W_k$.
 
-Now to compute $p = ({P(Y=1), P(Y=2), \ldots, P(Y=K)})$ we can again do Monte Carlo simulation. The basic steps are:
+Now to compute $p = ({P(Y=1), P(Y=2), \ldots, P(Y=K)})$ we can use Monte Carlo simulation. The basic steps are:
 
    - iterate m = 1, ... , M
       - for k = 1,...,K, sample $W_k$ from its corresponding normal distribution
@@ -139,7 +142,7 @@ Note that in a real application, we would likely want to do this for multiple ob
 ```{r, probit}
 set.seed(1)
 M <- 1000000
-alphas <- c(-3, -0.5, -0.25, .1, .15, .29, .4, .45)
+alphas <- c(-3, -0.5, -0.25, .1, .15, .29, .4, .45)  ## i.e., Xbeta from previous slide
 K <- length(alphas)
 system.time({
         # generate W_k ~ N(alpha_k, 1)
@@ -150,6 +153,7 @@ system.time({
         id <- apply(tmp, 2, which.max)
         tbl <- table(id)
         props[as.integer(names(tbl))] <- tbl / M
+        props
 })
 ```
 
@@ -165,9 +169,9 @@ mprobit <- nimbleFunction(
              for(m in 1:M) {
                    for(k in 1:K) 
                         w[k] <- alphas[k] + rnorm(1) 
-                   maxind <- K
-                   max <- w[K]
-                   for(k in 1:(K-1)) {
+                   maxind <- 1
+                   max <- w[1]
+                   for(k in 2:K) {
                         if(w[k] > max){
                                 maxind <- k
                                 max <- w[k]          
@@ -184,7 +188,7 @@ mprobit <- nimbleFunction(
 # (Partially) vectorized implementation in NIMBLE
 
 ```{r, rc-probit-vec}
-mprobit2 <- nimbleFunction(
+mprobitVec <- nimbleFunction(
          run = function(alphas = double(1), M = double(0)) {
              returnType(double(1))
              K <- length(alphas)
@@ -205,13 +209,13 @@ mprobit2 <- nimbleFunction(
 
 ```{r, probit-bake-off}
 cmprobit = compileNimble(mprobit)
-cmprobit2 = compileNimble(mprobit2)
+cmprobitVec = compileNimble(mprobitVec)
 set.seed(1)
 system.time(
 props2 <- cmprobit(alphas, M)
 )
 system.time(
-props3 <- cmprobit2(alphas, M)
+props3 <- cmprobitVec(alphas, M)
 )
 ```
 
@@ -223,7 +227,7 @@ So we get a nice six-fold speedup, even though all of the R code was vectorized.
 
 You can write a nimbleFunction like the above examples and use them directly in your BUGS code to define a model.
 
-Examples in my own work:
+Examples in my own work (see the model in the BUGS examples module):
 
  - writing a linearized exponential function, $1(x<0) \exp(x) + 1(x \geq 0) (1 + x)$, to robustify an exponential transformation
  - writing a b-spline function

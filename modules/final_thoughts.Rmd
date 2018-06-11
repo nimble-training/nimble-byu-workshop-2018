@@ -11,7 +11,7 @@ output:
 
 **We have post-doc funding!**
 
-**We have funding to bring selected users to Berkeley for intensive collaboration**
+**We have funding to bring selected users to Berkeley for intensive collaboration.**
 
  - Announcements: [nimble-announce Google site](https://groups.google.com/forum/#!forum/nimble-announce)
  - User	support/discussion: [nimble-users Google site](https://groups.google.com/forum/#!forum/nimble-users)
@@ -41,5 +41,5 @@ We try to be responsive on the the user support/discussion list, and heartily we
 # Big-picture goals
 
   - enhancing methodological "tech transfer"
-  - improving reproducibility of research using hierarchical models and methods research
+  - improving reproducibility of research that uses hierarchical models and of methods research for hierarchical models
   - enabling easier comparison of methods

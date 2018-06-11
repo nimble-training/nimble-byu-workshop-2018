@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta name="generator" content="pandoc" />
   <meta name="author" content="NIMBLE Development Team" />
-  <title>Automated MCMC comparison</title>
+  <title>Programming with models: Writing nimbleFunctions with models</title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
 div.sourceCode { overflow-x: auto; }
@@ -50,104 +50,233 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </head>
 <body>
 <div class="slide titlepage">
-  <h1 class="title">Automated MCMC comparison</h1>
+  <h1 class="title">Programming with models: Writing nimbleFunctions with models</h1>
   <h1 class="subtitle">BYU Summer Institute on Applied Statistics workshop</h1>
   <p class="author">
 NIMBLE Development Team
   </p>
 </div>
-<div id="automating-mcmc-comparisons-in-nimble" class="slide section level1">
-<h1>Automating MCMC comparisons in NIMBLE</h1>
+<div id="introduction" class="slide section level1">
+<h1>Introduction</h1>
+<p><em>nimbleFunctions</em> are at the heart of NIMBLE. They are the way that algorithms are implemented. They can also be used for</p>
 <ul>
-<li>NIMBLE provides tools to automatically compare MCMC efficiency across methods.</li>
-<li>Methods can include different NIMBLE MCMC configurations as well as JAGS, OpenBUGS/WinBUGS (not tested much) and Stan (separate code required).</li>
-<li>We will use <code>compareMCMCs()</code>, which calls <code>MCMCsuite()</code> internally.</li>
-<li><code>MCMCsuite()</code> can be used directly as well.</li>
+<li>user-defined BUGS distributions (already seen),</li>
+<li>user-defined BUGS functions (more-or-less seen)</li>
+<li>user-defined MCMC samplers (coming soon), and</li>
+<li>compiling parts of R (already seen), without reference to a model.</li>
 </ul>
+<p>But their main purpose is providing a way for developers to implement algorithms.</p>
 </div>
-<div id="example-metropolis-hastings-vs-slice-sampling.-nimble-vs.-jags." class="slide section level1">
-<h1>Example: Metropolis-Hastings vs slice sampling. NIMBLE vs. JAGS.</h1>
+<div id="components-of-a-nimblefunction" class="slide section level1">
+<h1>Components of a nimbleFunction</h1>
+<p>NIMBLE uses the concept of <em>two-stage evaluation</em> from computer science to run a model-specific algorithm based on model-generic algorithm code. The first stage of evaluation specializes the algorithm to the model of interest via <em>setup</em> code. The second stage runs the algorithm via <em>run</em> code.</p>
+<p>Thus, a nimbleFunction has two parts:</p>
 <ul>
-<li><code>compareMCMCs</code> and <code>MCMCsuite</code> need to build and compile the model themselves.
-<ul>
-<li>(This may become more flexible in the future.)</li>
-</ul></li>
-<li>These functions provide a variety of pre-defined MCMC configurations and a system for providing your own.</li>
-<li>I will illustrate using slice samplers instead of the default Metropolis-Hastings samplers for <code>a</code> and <code>b</code> in the litters model.</li>
+<li>setup code: used to tailor the algorithm to a particular model structure. Often this involves determining dependencies amongst nodes in the model and setting up storage using <em>modelValues</em></li>
+<li>run code: the guts of the algorithm, written generically so it will apply to any (appropriate) model</li>
 </ul>
-<p>Here's how we set things up to provide a customized MCMC configuration as one of the comparisons.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersInfo &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">code =</span> littersCode,
-                   <span class="dt">constants =</span> littersConsts,
-                   <span class="dt">data =</span> littersData, <span class="dt">inits =</span> littersInits)
-
-## A function to replace default samplers with slice
-## samplers for requested nodes
-configureSlice &lt;-<span class="st"> </span>function(Rmodel, nodes) {
-    MCMCconf &lt;-<span class="st"> </span><span class="kw">configureMCMC</span>(Rmodel) ## get a default configuration
-    ## print default samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    for(node in nodes) {
-        MCMCconf$<span class="kw">removeSamplers</span>(node)
-        MCMCconf$<span class="kw">addSampler</span>(<span class="dt">target =</span> node, <span class="dt">type =</span> <span class="st">&quot;slice&quot;</span>)
+<p>Setup code is written as a R function, using R code, usually including NIMBLE's special functions for querying the model structure (see the module <em>model_structure</em>).</p>
+<p>Run code is written using the NIMBLE <em>domain-specific language</em> (DSL). While this is formally a language distinct from R, you can just think of it as a subset of R, enhanced with some functions for operating on the model (see the module <em>operating_model</em>).</p>
+</div>
+<div id="some-syntax-for-nimblefunctions" class="slide section level1">
+<h1>Some syntax for nimbleFunctions</h1>
+<p>Here are some of the functions you may use in the run function of a nimbleFunction:</p>
+<ul>
+<li><em>returnType</em>, e.g., <code>returnType(double(1))</code> for a vector of reals</li>
+<li><em>length</em>, e.g., <code>length(x)</code> to determine the length of a run-time argument <em>x</em></li>
+<li><em>numeric</em>, <em>matrix</em> and <em>array</em> e.g., <code>result &lt;- numeric(n, init = 1.0)</code> to create a vector of reals called <em>result</em> initialized with values of 1.0</li>
+<li>model member functions <em>calculate</em>, <em>simulate</em>, <em>getLogProb</em>, <em>calculateDiff</em> and <em>getParam</em> to manipulate the model</li>
+<li>direct access to nodes or variables in a model using typical R syntax, e.g., <code>model[[myNode]] &lt;- rnorm(1)</code></li>
+<li><em>values</em> and <em>copy</em> (or, equivalently, <em>nimCopy</em>) to copy values</li>
+<li><em>print</em></li>
+<li>basic math, including vectorized math and some linear algebra</li>
+<li>random number generation functions, e.g., <code>rnorm(1, 100, 5)</code> (these must always only generate a single random variable)</li>
+<li>calling out to arbitrary R or C/C++ code with <em>nimbleRcall</em> and <em>nimbleExternalCall</em>.</li>
+</ul>
+<p>Chapter 10 of the NIMBLE User Manual describes the syntax for <em>run</em> code in detail, including lots of neat functionality such as using nested nimbleFunctions and having multiple run-time functions (i.e., methods) as part of a nimbleFunction.</p>
+</div>
+<div id="a-basic-example-empirical-bayes-maximum-marginal-likelihood" class="slide section level1">
+<h1>A basic example: empirical Bayes / maximum marginal likelihood</h1>
+<p>Let's consider how we would optimize the parameters in a model using a nimbleFunction. Basically, we'll just construct an objective function that we can then pass to R's <em>optim</em> function to do the actual numerical optimization. (NIMBLE also has an <code>optim()</code> that you can use within a nimbleFunction.)</p>
+<p>This amounts to setting things up to find the posterior mode of a model; this is generally a reasonable thing to do only for models with a small number of parameters and without hierarchical structure. That sounds restrictive, but if you can marginalize of latent process values, then we're doing empirical Bayes.</p>
+</div>
+<div id="a-nimblefunction-for-the-litters-marginalized-model" class="slide section level1">
+<h1>A nimbleFunction for the litters marginalized model</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">objective &lt;-<span class="st"> </span><span class="kw">nimbleFunction</span>(
+    <span class="dt">setup =</span> function(model) {
+          <span class="co"># ordinarily we would do stuff here, but in this case</span>
+          <span class="co"># we only need make the nimbleFunction aware of the model</span>
+          },
+    <span class="dt">run =</span> function(<span class="dt">par =</span> <span class="kw">double</span>(<span class="dv">1</span>)) {
+        <span class="kw">returnType</span>(<span class="kw">double</span>(<span class="dv">0</span>))
+        model[[<span class="st">'a'</span>]] &lt;&lt;-<span class="st"> </span><span class="kw">exp</span>(par[<span class="dv">1</span>:<span class="dv">2</span>])
+        model[[<span class="st">'b'</span>]] &lt;&lt;-<span class="st"> </span><span class="kw">exp</span>(par[<span class="dv">3</span>:<span class="dv">4</span>])
+        ans &lt;-<span class="st"> </span>model$<span class="kw">calculate</span>()
+        <span class="kw">return</span>(ans)
     }
-    ## print modified samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    MCMCconf
-}
-
-## A configuration list for compareMCMCs
-MCMCdefs &lt;-<span class="st"> </span><span class="kw">list</span>(
-    <span class="dt">nimble_slice =</span> <span class="kw">quote</span>({
-        ## This code will be evaluated in an environment
-        ## where 'Rmodel' is the model.
-        nodes &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">'a[1]'</span>,<span class="st">'a[2]'</span>,<span class="st">'b[1]'</span>,<span class="st">'b[2]'</span>)
-        MCMCconf &lt;-<span class="st"> </span><span class="kw">configureMCMC</span>(Rmodel) ## get a default configuration
-        ## print default samplers for illustration
-        MCMCconf$<span class="kw">printSamplers</span>(nodes)
-        for(node in nodes) {
-                 MCMCconf$<span class="kw">removeSamplers</span>(node)
-                 MCMCconf$<span class="kw">addSampler</span>(<span class="dt">target =</span> node, <span class="dt">type =</span> <span class="st">&quot;slice&quot;</span>)
-        }
-        ## print modified samplers for illustration
-        MCMCconf$<span class="kw">printSamplers</span>(nodes)
-        MCMCconf
+)</code></pre></div>
+<p>This is actually a nimbleFunction <em>generator</em> -- we can't run it yet -- we need to create a specialized instance of the nimbleFunction that is tailored for some model, in our case the marginalized litters model.</p>
+</div>
+<div id="specializing-the-nimblefunction---first-set-up-the-model-of-interest" class="slide section level1">
+<h1>Specializing the nimbleFunction - first set up the model of interest</h1>
+<p>First let's build the marginalized litters model again.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dbetabin &lt;-<span class="st"> </span><span class="kw">nimbleFunction</span>(
+    <span class="dt">run =</span> function(<span class="dt">x =</span> <span class="kw">double</span>(<span class="dv">0</span>), <span class="dt">alpha =</span> <span class="kw">double</span>(<span class="dv">0</span>), <span class="dt">beta =</span> <span class="kw">double</span>(<span class="dv">0</span>), <span class="dt">size =</span> <span class="kw">double</span>(<span class="dv">0</span>), 
+        <span class="dt">log =</span> <span class="kw">integer</span>(<span class="dv">0</span>, <span class="dt">default =</span> <span class="dv">0</span>)) {
+        
+        <span class="kw">returnType</span>(<span class="kw">double</span>(<span class="dv">0</span>))
+        logProb &lt;-<span class="st"> </span><span class="kw">lgamma</span>(size<span class="dv">+1</span>) -<span class="st"> </span><span class="kw">lgamma</span>(x<span class="dv">+1</span>) -<span class="st"> </span><span class="kw">lgamma</span>(size -<span class="st"> </span>x +<span class="st"> </span><span class="dv">1</span>) +
+<span class="st">            </span><span class="kw">lgamma</span>(alpha +<span class="st"> </span>beta) -<span class="st"> </span><span class="kw">lgamma</span>(alpha) -<span class="st"> </span><span class="kw">lgamma</span>(beta) +
+<span class="st">            </span><span class="kw">lgamma</span>(x +<span class="st"> </span>alpha) +<span class="st"> </span><span class="kw">lgamma</span>(size -<span class="st"> </span>x +<span class="st"> </span>beta) -<span class="st"> </span><span class="kw">lgamma</span>(size +<span class="st"> </span>alpha +<span class="st"> </span>beta)
+        if(log) <span class="kw">return</span>(logProb)
+        else <span class="kw">return</span>(<span class="kw">exp</span>(logProb))
     })
+
+rbetabin &lt;-<span class="st"> </span><span class="kw">nimbleFunction</span>(
+    <span class="dt">run =</span> function(<span class="dt">n =</span> <span class="kw">integer</span>(<span class="dv">0</span>), <span class="dt">alpha =</span> <span class="kw">double</span>(<span class="dv">0</span>), <span class="dt">beta =</span> <span class="kw">double</span>(<span class="dv">0</span>), <span class="dt">size =</span> <span class="kw">double</span>(<span class="dv">0</span>)) {
+        <span class="kw">returnType</span>(<span class="kw">double</span>(<span class="dv">0</span>))
+        if(n !=<span class="st"> </span><span class="dv">1</span>) <span class="kw">print</span>(<span class="st">&quot;rbetabin only allows n = 1; using n = 1.&quot;</span>)
+        p &lt;-<span class="st"> </span><span class="kw">rbeta</span>(<span class="dv">1</span>, alpha, beta)
+        <span class="kw">return</span>(<span class="kw">rbinom</span>(<span class="dv">1</span>, <span class="dt">size =</span> size, <span class="dt">prob =</span> p))
+    })</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersMargCode &lt;-<span class="st"> </span><span class="kw">nimbleCode</span>({
+  for (i in <span class="dv">1</span>:G) {
+     for (j in <span class="dv">1</span>:N) {
+         <span class="co"># (marginal) likelihood (data model)</span>
+        r[i,j] ~<span class="st"> </span><span class="kw">dbetabin</span>(a[i], b[i], n[i,j])
+     }
+     <span class="co"># prior for hyperparameters</span>
+     a[i] ~<span class="st"> </span><span class="kw">dgamma</span>(<span class="dv">1</span>, .<span class="dv">001</span>)
+     b[i] ~<span class="st"> </span><span class="kw">dgamma</span>(<span class="dv">1</span>, .<span class="dv">001</span>)
+   }
+})</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">G &lt;-<span class="st"> </span><span class="dv">2</span>
+N &lt;-<span class="st"> </span><span class="dv">16</span>
+n &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">13</span>, <span class="dv">12</span>, <span class="dv">12</span>, <span class="dv">11</span>, <span class="dv">9</span>, <span class="dv">10</span>, 
+              <span class="dv">9</span>, <span class="dv">9</span>, <span class="dv">8</span>, <span class="dv">11</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">13</span>, <span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">5</span>, <span class="dv">9</span>, <span class="dv">9</span>, <span class="dv">13</span>, 
+              <span class="dv">7</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">7</span>, <span class="dv">6</span>, <span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">7</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)
+r &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">13</span>, <span class="dv">12</span>, <span class="dv">12</span>, <span class="dv">11</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">9</span>, <span class="dv">9</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">8</span>, <span class="dv">9</span>, 
+     <span class="dv">12</span>, <span class="dv">9</span>, <span class="dv">11</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">7</span>, <span class="dv">11</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">3</span>, <span class="dv">7</span>, <span class="dv">3</span>, <span class="dv">7</span>, <span class="dv">0</span>), 
+     <span class="dt">nrow =</span> <span class="dv">2</span>)
+              
+littersConsts &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">G =</span> G, <span class="dt">N =</span> N, <span class="dt">n =</span> n)
+littersData &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">r =</span> r)
+littersInits &lt;-<span class="st"> </span><span class="kw">list</span>( <span class="dt">a =</span> <span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">2</span>), <span class="dt">b=</span><span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">2</span>) )
+
+littersMargModel &lt;-<span class="st"> </span><span class="kw">nimbleModel</span>(littersMargCode, 
+          <span class="dt">data =</span> littersData, <span class="dt">constants =</span> littersConsts, <span class="dt">inits =</span> littersInits)</code></pre></div>
+<pre><code>## defining model...</code></pre>
+<pre><code>## Registering the following user-provided distributions: dbetabin .
+## NIMBLE has registered dbetabin as a distribution based on its use in BUGS code. Note that if you make changes to the nimbleFunctions for the distribution, you must call 'deregisterDistributions' before using the distribution in BUGS code for those changes to take effect.</code></pre>
+<pre><code>## building model...</code></pre>
+<pre><code>## setting data and initial values...</code></pre>
+<pre><code>## running calculate on model (any error reports that follow may simply reflect missing values in model variables) ... 
+## checking model sizes and dimensions...
+## model building finished.</code></pre>
+</div>
+<div id="specializing-the-nimblefunction-to-the-model" class="slide section level1">
+<h1>Specializing the nimbleFunction to the model</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">rObjective &lt;-<span class="st"> </span><span class="kw">objective</span>(littersMargModel)
+## cObjective &lt;- compileNimble(rObjective, project = littersMargModel)  ## remember to compile model first
+cLittersMargModel &lt;-<span class="st"> </span><span class="kw">compileNimble</span>(littersMargModel)</code></pre></div>
+<pre><code>## compiling... this may take a minute. Use 'showCompilerOutput = TRUE' to see C++ compiler details.</code></pre>
+<pre><code>## compilation finished.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cObjective &lt;-<span class="st"> </span><span class="kw">compileNimble</span>(rObjective, <span class="dt">project =</span> littersMargModel)</code></pre></div>
+<pre><code>## compiling... this may take a minute. Use 'showCompilerOutput = TRUE' to see C++ compiler details.
+## compilation finished.</code></pre>
+<p>Now let's try using it.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(optR &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">log</span>(<span class="kw">rep</span>(<span class="dv">1</span>,<span class="dv">4</span>)), rObjective$run, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">fnscale =</span> -<span class="dv">1</span>)))</code></pre></div>
+<pre><code>##    user  system elapsed 
+##   2.988   0.008   2.999</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(optC &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">log</span>(<span class="kw">rep</span>(<span class="dv">1</span>,<span class="dv">4</span>)), cObjective$run, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">fnscale =</span> -<span class="dv">1</span>)))</code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.020   0.000   0.019</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">optR</code></pre></div>
+<pre><code>## $par
+## [1]  3.5802268  0.4638447  1.4091323 -0.5817455
+## 
+## $value
+## [1] -80.46196
+## 
+## $counts
+## function gradient 
+##      333       NA 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">optC</code></pre></div>
+<pre><code>## $par
+## [1]  3.5802268  0.4638447  1.4091323 -0.5817455
+## 
+## $value
+## [1] -80.46196
+## 
+## $counts
+## function gradient 
+##      333       NA 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">exp</span>(optC$par)</code></pre></div>
+<pre><code>## [1] 35.8816770  1.5901760  4.0924031  0.5589219</code></pre>
+</div>
+<div id="writing-generic-functions" class="slide section level1">
+<h1>Writing generic functions</h1>
+<p>Let's look back at our nimbleFunction objective function. What stops it from being usable on any model?</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">objective &lt;-<span class="st"> </span><span class="kw">nimbleFunction</span>(
+    <span class="dt">setup =</span> function(model, target) {
+          ## we'll start putting stuff here soon, I promise!
+          },
+    <span class="dt">run =</span> function(<span class="dt">par =</span> <span class="kw">double</span>(<span class="dv">1</span>)) {
+        <span class="kw">returnType</span>(<span class="kw">double</span>(<span class="dv">0</span>))
+        <span class="kw">values</span>(model, target) &lt;&lt;-<span class="st"> </span><span class="kw">exp</span>(par)
+        ans &lt;-<span class="st"> </span>model$<span class="kw">calculate</span>()
+        <span class="kw">return</span>(ans)
+    }
 )</code></pre></div>
 </div>
-<div id="running-mcmcsuite-and-comparemcmcs" class="slide section level1">
-<h1>Running MCMCsuite and compareMCMCs</h1>
-<p>You can either use <code>MCMCsuite()</code> or <code>compareMCMCs()</code>. The latter allows you to print out some nice html plots of the comparisons.</p>
-<p>(I'm not showing the output here as the functions are not really designed to interface with compiling an R Markdown document.)</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersComparisons &lt;-<span class="st"> </span><span class="kw">compareMCMCs</span>(
-    littersInfo,
-    <span class="dt">MCMCs =</span> <span class="kw">c</span>(<span class="st">&quot;jags&quot;</span>, <span class="st">&quot;nimble&quot;</span>, <span class="st">&quot;nimble_slice&quot;</span>),
-    <span class="dt">MCMCdefs =</span> MCMCdefs,
-    <span class="dt">monitors =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>),
-    <span class="dt">niter =</span> <span class="dv">10000</span>,
-    <span class="dt">burnin =</span> <span class="dv">1000</span>,
-    <span class="dt">summary =</span> <span class="ot">FALSE</span>)
-
-## or here is the MCMCsuite call
-littersResults &lt;-<span class="st"> </span><span class="kw">MCMCsuite</span>(
-               littersCode,
-               <span class="dt">constants =</span> littersConsts,
-               <span class="dt">data =</span> littersData,
-               <span class="dt">inits =</span> littersInits,
-               <span class="dt">MCMCs =</span> <span class="kw">c</span>(<span class="st">&quot;jags&quot;</span>, <span class="st">&quot;nimble&quot;</span>, <span class="st">&quot;nimble_slice&quot;</span>),
-               <span class="dt">MCMCdefs =</span> MCMCdefs,
-               <span class="dt">monitors =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>),
-               <span class="dt">niter =</span> <span class="dv">10000</span>,
-               <span class="dt">burnin =</span> <span class="dv">1000</span>)</code></pre></div>
-</div>
-<div id="viewing-the-comparisons" class="slide section level1">
-<h1>Viewing the comparisons</h1>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">make_MCMC_comparison_pages</span>(littersComparisons,
-                           <span class="dt">dir =</span> <span class="st">&quot;litters_comparison_results&quot;</span>,
-                           <span class="dt">modelNames =</span> <span class="st">&quot;littersComparisons&quot;</span>)</code></pre></div>
-<p>The results are <a href="litters_comparison_results/littersComparisons.html">here</a>.</p>
-</div>
-<div id="add-stan-and-jags-for-litters" class="slide section level1">
-<h1>Add Stan and JAGS for litters?</h1>
+<div id="writing-generic-functions---querying-model-structure" class="slide section level1">
+<h1>Writing generic functions - querying model structure</h1>
+<p>Calculating the density for all model nodes is not necessary for this optimization, as any nodes that do not depend on the target parameters do not play a role in the optimization.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">objective &lt;-<span class="st"> </span><span class="kw">nimbleFunction</span>(
+    <span class="dt">setup =</span> function(model, target) {
+          calcNodes &lt;-<span class="st"> </span>model$<span class="kw">getDependencies</span>(target)
+          },
+    <span class="dt">run =</span> function(<span class="dt">par =</span> <span class="kw">double</span>(<span class="dv">1</span>)) {
+        <span class="kw">returnType</span>(<span class="kw">double</span>(<span class="dv">0</span>))
+        <span class="kw">values</span>(model, target) &lt;&lt;-<span class="st"> </span><span class="kw">exp</span>(par)
+        ans &lt;-<span class="st"> </span>model$<span class="kw">calculate</span>(calcNodes)
+        <span class="kw">return</span>(ans)
+    }
+)</code></pre></div>
+<p>(Of course for maximum marginal likelihood we'd generally expect that the entire model probability density would be calculated.)</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">rObjective &lt;-<span class="st"> </span><span class="kw">objective</span>(littersMargModel, <span class="kw">c</span>(<span class="st">'a'</span>, <span class="st">'b'</span>))  ## or c('a[1]','a[2]','b[1]','b[2]')
+cObjective &lt;-<span class="st"> </span><span class="kw">compileNimble</span>(rObjective, <span class="dt">project =</span> littersMargModel)</code></pre></div>
+<pre><code>## compiling... this may take a minute. Use 'showCompilerOutput = TRUE' to see C++ compiler details.</code></pre>
+<pre><code>## compilation finished.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">optC &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">log</span>(<span class="kw">rep</span>(<span class="dv">1</span>,<span class="dv">4</span>)), cObjective$run, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">fnscale =</span> -<span class="dv">1</span>))
+optC</code></pre></div>
+<pre><code>## $par
+## [1]  3.5802268  0.4638447  1.4091323 -0.5817455
+## 
+## $value
+## [1] -80.46196
+## 
+## $counts
+## function gradient 
+##      333       NA 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
 </div>
 </body>
 </html>

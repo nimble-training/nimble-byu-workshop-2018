@@ -13,11 +13,12 @@ output:
 # e.g. package and dataset loading
 library(methods)  # otherwise new() not being found - weird
 library(nimble)
+read_chunk('chunks_litters.R')
 ```
 
 # Introduction
 
-NIMBLE provides a variety of distributions, as seen in Section 5.2.3 of the [NIMBLE manual](http://r-nimble.org/manuals/NimbleUserManual.pdf). 
+NIMBLE provides a variety of distributions, as seen in [Section 5.2.4 of the NIMBLE manual](http://r-nimble.org/manuals/NimbleUserManual.pdf#page=39). 
 
 However, there are lots of other probability distributions out there that you might want to use. So NIMBLE allows you to code up your own distribution and then use it in BUGS code.
 
@@ -75,7 +76,7 @@ assign('dbetabin', dbetabin, .GlobalEnv)
 assign('rbetabin', rbetabin, .GlobalEnv)
 ```
 
-The User Manual also shows how you could write CDF ('p') and inverse CDF ('q') such that you could make use of truncation with your distribution, but for standard usage all you need is the density ('d') and simulation ('r') functions.
+The User Manual also shows how you could write CDF ('p') and inverse CDF ('q') such that you could make use of truncation with your distribution, but for standard usage all you need is the density ('d') and simulation ('r') functions (and strictly speaking you don't need the simulation function if you won't use any algorithms relying on that).
 
 If you'd like to allow for different parameterizations for your distribution, and other advanced features you can `register` the distribution with NIMBLE via `registerDistributions()` but in many cases (including this one) that is not necessary. NIMBLE will just find the distribution automatically.
 
@@ -129,22 +130,18 @@ cLittersMargMCMC <- compileNimble(littersMargMCMC, project = littersMargModel)
 niter <- 5000
 nburn <- 1000
 set.seed(1)
-samples <- runMCMC(cLittersMargMCMC, niter = niter, nburnin = nburn,
+samplesMarg <- runMCMC(cLittersMargMCMC, niter = niter, nburnin = nburn,
         inits = littersInits, nchains = 1, samplesAsCodaMCMC = TRUE)
 ```
 
 # Using the distribution: results
 
+
+```{r, makePlot, echo=FALSE}
+```
+
 ```{r, use-dist-results, fig.width=12, fig.height=6, fig.cap=''}
-par(mfrow = c(2, 2), mai = c(.6, .5, .4, .1), mgp = c(1.8, 0.7, 0))
-ts.plot(samples[ , 'a[1]'], xlab = 'iteration',
-     ylab = expression(a[1]), main = expression(a[1]))
-ts.plot(samples[ , 'b[1]'], xlab = 'iteration',
-     ylab = expression(b[1]), main = expression(b[1]))
-ts.plot(samples[ , 'a[2]'], xlab = 'iteration',
-     ylab = expression(a[2]), main = expression(a[2]))
-ts.plot(samples[ , 'b[2]'], xlab = 'iteration',
-     ylab = expression(b[2]), main = expression(b[2]))
+makePlot(samplesMarg)
 ```
 
 That's not quite as good as the cross-level sampler, almost certainly because the cross-level sampler is blocking each pair of hyperparameters. We could easily do that here.

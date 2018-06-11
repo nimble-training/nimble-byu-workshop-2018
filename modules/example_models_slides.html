@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta name="generator" content="pandoc" />
   <meta name="author" content="NIMBLE Development Team" />
-  <title>Automated MCMC comparison</title>
+  <title>Example BUGS models</title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
 div.sourceCode { overflow-x: auto; }
@@ -50,104 +50,215 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </head>
 <body>
 <div class="slide titlepage">
-  <h1 class="title">Automated MCMC comparison</h1>
+  <h1 class="title">Example BUGS models</h1>
   <h1 class="subtitle">BYU Summer Institute on Applied Statistics workshop</h1>
   <p class="author">
 NIMBLE Development Team
   </p>
 </div>
-<div id="automating-mcmc-comparisons-in-nimble" class="slide section level1">
-<h1>Automating MCMC comparisons in NIMBLE</h1>
-<ul>
-<li>NIMBLE provides tools to automatically compare MCMC efficiency across methods.</li>
-<li>Methods can include different NIMBLE MCMC configurations as well as JAGS, OpenBUGS/WinBUGS (not tested much) and Stan (separate code required).</li>
-<li>We will use <code>compareMCMCs()</code>, which calls <code>MCMCsuite()</code> internally.</li>
-<li><code>MCMCsuite()</code> can be used directly as well.</li>
-</ul>
+<div id="some-example-models" class="slide section level1">
+<h1>Some example models</h1>
+<p>Let's see some examples to get a feel for what one can do with the BUGS language for specifying models.</p>
+<p>With the ability to define deterministic variables, modify elements of arrays, and a reasonable number of mathematical functions, BUGS is quite flexible. NIMBLE expands that flexibility by letting you write your own functions that can be used in defining the model structure.</p>
 </div>
-<div id="example-metropolis-hastings-vs-slice-sampling.-nimble-vs.-jags." class="slide section level1">
-<h1>Example: Metropolis-Hastings vs slice sampling. NIMBLE vs. JAGS.</h1>
-<ul>
-<li><code>compareMCMCs</code> and <code>MCMCsuite</code> need to build and compile the model themselves.
-<ul>
-<li>(This may become more flexible in the future.)</li>
-</ul></li>
-<li>These functions provide a variety of pre-defined MCMC configurations and a system for providing your own.</li>
-<li>I will illustrate using slice samplers instead of the default Metropolis-Hastings samplers for <code>a</code> and <code>b</code> in the litters model.</li>
-</ul>
-<p>Here's how we set things up to provide a customized MCMC configuration as one of the comparisons.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersInfo &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">code =</span> littersCode,
-                   <span class="dt">constants =</span> littersConsts,
-                   <span class="dt">data =</span> littersData, <span class="dt">inits =</span> littersInits)
-
-## A function to replace default samplers with slice
-## samplers for requested nodes
-configureSlice &lt;-<span class="st"> </span>function(Rmodel, nodes) {
-    MCMCconf &lt;-<span class="st"> </span><span class="kw">configureMCMC</span>(Rmodel) ## get a default configuration
-    ## print default samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    for(node in nodes) {
-        MCMCconf$<span class="kw">removeSamplers</span>(node)
-        MCMCconf$<span class="kw">addSampler</span>(<span class="dt">target =</span> node, <span class="dt">type =</span> <span class="st">&quot;slice&quot;</span>)
+<div id="survival-analysis" class="slide section level1">
+<h1>Survival analysis</h1>
+<p>Here's a parametric accelerated failure time model. We'll see a nonparametric accelerated failure time model later.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">nimbleCode</span>({
+    for(i in <span class="dv">1</span>:n) {
+        x[i] ~<span class="st"> </span><span class="kw">dweib</span>(alpha, lambda[i])
+        is_cens[i] ~<span class="st"> </span><span class="kw">dinterval</span>(x[i], c[i])  
+        lambda[i] &lt;-<span class="st"> </span><span class="kw">exp</span>(eta +<span class="st"> </span>Z[i,<span class="dv">1</span>]*delta[<span class="dv">1</span>] +<span class="st"> </span>Z[i,<span class="dv">2</span>]*delta[<span class="dv">2</span>])
     }
-    ## print modified samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    MCMCconf
-}
+    conc ~<span class="st"> </span><span class="kw">dgamma</span>(<span class="dv">1</span>, <span class="dv">1</span>)
+    eta ~<span class="st"> </span><span class="kw">dunif</span>(b0, B0) 
+    alpha ~<span class="st"> </span><span class="kw">dunif</span>(a0, A0)
+    for(j in <span class="dv">1</span>:<span class="dv">2</span>)
+        delta[j] ~<span class="st"> </span><span class="kw">dflat</span>()
+})</code></pre></div>
+<p><code>dinterval</code> is a trick for accounting for censoring, with <em>is_cens</em> set as <em>data</em>.</p>
+<p>For observations that are right-censored we:</p>
+<ul>
+<li>set <code>is_cens[i] = 1</code></li>
+<li>set <code>x[i] = NA</code></li>
+<li>set <code>c[i]</code> to be the censoring time</li>
+</ul>
+<p>Then the dinterval probability is one only if <code>x[i] &gt; c[i]</code>.</p>
+<p>For observations that are not censored we:</p>
+<ul>
+<li>set <code>is_cens[i] = 0</code></li>
+<li>set <code>x[i]</code> to be the data value</li>
+<li>set <code>c[i]</code> to be <code>Inf</code> (or some value greater than <code>x[i]</code></li>
+</ul>
+</div>
+<div id="glmm-regression-model" class="slide section level1">
+<h1>GLMM regression model</h1>
+<p>Here we have indexing indicating fixed membership in a group to allow ANOVA-like effects.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">model {
+  for (i in <span class="dv">1</span>:n){
+    y[i] ~<span class="st"> </span><span class="kw">dbin</span> (p.bound[i], <span class="dv">1</span>)
+    p.bound[i] &lt;-<span class="st"> </span><span class="kw">max</span>(<span class="dv">0</span>, <span class="kw">min</span>(<span class="dv">1</span>, <span class="kw">ilogit</span>(b<span class="fl">.0</span> +<span class="st"> </span>b.female*female[i] +<span class="st"> </span>b.black*black[i] +
+<span class="st">      </span>b.female.black*female[i]*black[i] +
+<span class="st">      </span>b.age[age[i]] +<span class="st"> </span>b.edu[edu[i]] +<span class="st"> </span>b.age.edu[age[i],edu[i]] +
+<span class="st">      </span>b.state[state[i]])))
+  }
+  b<span class="fl">.0</span> ~<span class="st"> </span><span class="kw">dnorm</span> (<span class="dv">0</span>, .<span class="dv">0001</span>)
+  b.female ~<span class="st"> </span><span class="kw">dnorm</span> (<span class="dv">0</span>, .<span class="dv">0001</span>)
+  b.black ~<span class="st"> </span><span class="kw">dnorm</span> (<span class="dv">0</span>, .<span class="dv">0001</span>)
+  b.female.black ~<span class="st"> </span><span class="kw">dnorm</span> (<span class="dv">0</span>, .<span class="dv">0001</span>)
+  
+  for (j in <span class="dv">1</span>:n.age){b.age[j] ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, tau.age)}
+  for (j in <span class="dv">1</span>:n.edu){b.edu[j] ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, tau.edu)}
+  for (j in <span class="dv">1</span>:n.age){for (k in <span class="dv">1</span>:n.edu){
+    b.age.edu[j,k] ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, tau.age.edu)}}
+  for (j in <span class="dv">1</span>:n.state){
+    b.state[j] ~<span class="st"> </span><span class="kw">dnorm</span>(b.state.hat[j], tau.state)
+    b.state.hat[j] &lt;-<span class="st"> </span>b.region[region[j]] +<span class="st"> </span>b.v.prev*v.prev[j]}
+  b.v.prev ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, .<span class="dv">0001</span>)
+  for (j in <span class="dv">1</span>:n.region){b.region[j] ~<span class="st"> </span><span class="kw">dnorm</span> (<span class="dv">0</span>, tau.region)}
 
-## A configuration list for compareMCMCs
-MCMCdefs &lt;-<span class="st"> </span><span class="kw">list</span>(
-    <span class="dt">nimble_slice =</span> <span class="kw">quote</span>({
-        ## This code will be evaluated in an environment
-        ## where 'Rmodel' is the model.
-        nodes &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">'a[1]'</span>,<span class="st">'a[2]'</span>,<span class="st">'b[1]'</span>,<span class="st">'b[2]'</span>)
-        MCMCconf &lt;-<span class="st"> </span><span class="kw">configureMCMC</span>(Rmodel) ## get a default configuration
-        ## print default samplers for illustration
-        MCMCconf$<span class="kw">printSamplers</span>(nodes)
-        for(node in nodes) {
-                 MCMCconf$<span class="kw">removeSamplers</span>(node)
-                 MCMCconf$<span class="kw">addSampler</span>(<span class="dt">target =</span> node, <span class="dt">type =</span> <span class="st">&quot;slice&quot;</span>)
-        }
-        ## print modified samplers for illustration
-        MCMCconf$<span class="kw">printSamplers</span>(nodes)
-        MCMCconf
-    })
-)</code></pre></div>
-</div>
-<div id="running-mcmcsuite-and-comparemcmcs" class="slide section level1">
-<h1>Running MCMCsuite and compareMCMCs</h1>
-<p>You can either use <code>MCMCsuite()</code> or <code>compareMCMCs()</code>. The latter allows you to print out some nice html plots of the comparisons.</p>
-<p>(I'm not showing the output here as the functions are not really designed to interface with compiling an R Markdown document.)</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersComparisons &lt;-<span class="st"> </span><span class="kw">compareMCMCs</span>(
-    littersInfo,
-    <span class="dt">MCMCs =</span> <span class="kw">c</span>(<span class="st">&quot;jags&quot;</span>, <span class="st">&quot;nimble&quot;</span>, <span class="st">&quot;nimble_slice&quot;</span>),
-    <span class="dt">MCMCdefs =</span> MCMCdefs,
-    <span class="dt">monitors =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>),
-    <span class="dt">niter =</span> <span class="dv">10000</span>,
-    <span class="dt">burnin =</span> <span class="dv">1000</span>,
-    <span class="dt">summary =</span> <span class="ot">FALSE</span>)
+  tau.age &lt;-<span class="st"> </span><span class="kw">pow</span>(sigma.age, -<span class="dv">2</span>)
+  tau.edu &lt;-<span class="st"> </span><span class="kw">pow</span>(sigma.edu, -<span class="dv">2</span>)
+  tau.age.edu &lt;-<span class="st"> </span><span class="kw">pow</span>(sigma.age.edu, -<span class="dv">2</span>)
+  tau.state &lt;-<span class="st"> </span><span class="kw">pow</span>(sigma.state, -<span class="dv">2</span>)
+  tau.region &lt;-<span class="st"> </span><span class="kw">pow</span>(sigma.region, -<span class="dv">2</span>)
 
-## or here is the MCMCsuite call
-littersResults &lt;-<span class="st"> </span><span class="kw">MCMCsuite</span>(
-               littersCode,
-               <span class="dt">constants =</span> littersConsts,
-               <span class="dt">data =</span> littersData,
-               <span class="dt">inits =</span> littersInits,
-               <span class="dt">MCMCs =</span> <span class="kw">c</span>(<span class="st">&quot;jags&quot;</span>, <span class="st">&quot;nimble&quot;</span>, <span class="st">&quot;nimble_slice&quot;</span>),
-               <span class="dt">MCMCdefs =</span> MCMCdefs,
-               <span class="dt">monitors =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>),
-               <span class="dt">niter =</span> <span class="dv">10000</span>,
-               <span class="dt">burnin =</span> <span class="dv">1000</span>)</code></pre></div>
+  sigma.age ~<span class="st"> </span><span class="kw">dunif</span> (<span class="dv">0</span>, <span class="dv">100</span>)
+  sigma.edu ~<span class="st"> </span><span class="kw">dunif</span> (<span class="dv">0</span>, <span class="dv">100</span>)
+  sigma.age.edu ~<span class="st"> </span><span class="kw">dunif</span> (<span class="dv">0</span>, <span class="dv">100</span>)
+  sigma.state ~<span class="st"> </span><span class="kw">dunif</span> (<span class="dv">0</span>, <span class="dv">100</span>)
+  sigma.region ~<span class="st"> </span><span class="kw">dunif</span> (<span class="dv">0</span>, <span class="dv">100</span>)
+}</code></pre></div>
 </div>
-<div id="viewing-the-comparisons" class="slide section level1">
-<h1>Viewing the comparisons</h1>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">make_MCMC_comparison_pages</span>(littersComparisons,
-                           <span class="dt">dir =</span> <span class="st">&quot;litters_comparison_results&quot;</span>,
-                           <span class="dt">modelNames =</span> <span class="st">&quot;littersComparisons&quot;</span>)</code></pre></div>
-<p>The results are <a href="litters_comparison_results/littersComparisons.html">here</a>.</p>
+<div id="mixture-model" class="slide section level1">
+<h1>Mixture model</h1>
+<p>Here's a somewhat complicated ecological model for occupancy of sites by an animal.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">nimbleCode</span>( {
+    <span class="co"># Specify priors</span>
+    <span class="co"># zero-inflation/suitability</span>
+    phi ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>,<span class="dv">1</span>)          <span class="co"># proportion of suitable sites (probability of being not a structural 0)</span>
+    theta &lt;-<span class="st"> </span><span class="dv">1</span>-phi            <span class="co"># zero-inflation (proportion of unsuitable)</span>
+    ltheta &lt;-<span class="st"> </span><span class="kw">logit</span>(theta)
+    
+    <span class="co"># abundance</span>
+    beta0 ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, <span class="fl">0.1</span>)     <span class="co"># log(lambda) intercept</span>
+    for(k in <span class="dv">1</span>:<span class="dv">7</span>){            <span class="co"># Regression params in lambda</span>
+      beta[k] ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, <span class="dv">1</span>)
+    }
+    tau.lam &lt;-<span class="st"> </span><span class="kw">pow</span>(sd.lam, -<span class="dv">2</span>)
+    sd.lam ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>, <span class="dv">2</span>)      <span class="co"># site heterogeneity in lambda</span>
+    
+    <span class="co"># detection</span>
+    for(j in <span class="dv">1</span>:<span class="dv">3</span>){
+      alpha0[j] &lt;-<span class="st"> </span><span class="kw">logit</span>(mean.p[j])
+      mean.p[j] ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>, <span class="dv">1</span>) <span class="co"># p intercept for occasions 1-3</span>
+      }
+    for(k in <span class="dv">1</span>:<span class="dv">13</span>){           <span class="co"># Regression params in p</span>
+      alpha[k] ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, <span class="dv">1</span>)
+      }
+    tau.p.site &lt;-<span class="st"> </span><span class="kw">pow</span>(sd.p.site, -<span class="dv">2</span>)
+    sd.p.site ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>, <span class="dv">2</span>)   <span class="co"># site heterogeneity in p</span>
+    tau.p.survey &lt;-<span class="st"> </span><span class="kw">pow</span>(sd.p.survey, -<span class="dv">2</span>)
+    sd.p.survey ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>, <span class="dv">2</span>) <span class="co"># site-survey heterogeneity in p</span>
+    
+    <span class="co"># ZIP model for abundance</span>
+    for (i in <span class="dv">1</span>:nsite){
+      a[i] ~<span class="st"> </span><span class="kw">dbern</span>(phi)
+      eps.lam[i] ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, tau.lam)       <span class="co"># Random site effects in log(abundance)</span>
+      loglam[i] &lt;-<span class="st"> </span>beta0 +<span class="st"> </span><span class="kw">inprod</span>(beta[<span class="dv">1</span>:<span class="dv">7</span>], lamDM[i, <span class="dv">1</span>:<span class="dv">7</span>]) +<span class="st"> </span>eps.lam[i] *<span class="st"> </span>hlam.on
+      loglam.lim[i] &lt;-<span class="st"> </span><span class="kw">min</span>(<span class="dv">250</span>, <span class="kw">max</span>(-<span class="dv">250</span>, loglam[i]))  <span class="co"># Stabilize log</span>
+      lam[i] &lt;-<span class="st"> </span><span class="kw">exp</span>(loglam.lim[i])
+      mu.poisson[i] &lt;-<span class="st"> </span>a[i] *<span class="st"> </span>lam[i]
+      N[i] ~<span class="st"> </span><span class="kw">dpois</span>(mu.poisson[i])
+    }
+    
+    <span class="co"># Measurement error model</span>
+    for (i in <span class="dv">1</span>:nsite){
+      eps.p.site[i] ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, tau.p.site) <span class="co"># Random site effects in logit(p)</span>
+      for (j in <span class="dv">1</span>:nrep){
+        y[i,j] ~<span class="st"> </span><span class="kw">dbin</span>(p[i,j], N[i])
+        p[i,j] &lt;-<span class="st"> </span><span class="dv">1</span> /<span class="st"> </span>(<span class="dv">1</span> +<span class="st"> </span><span class="kw">exp</span>(-lp.lim[i,j]))
+        lp.lim[i,j] &lt;-<span class="st"> </span><span class="kw">min</span>(<span class="dv">250</span>, <span class="kw">max</span>(-<span class="dv">250</span>, lp[i,j]))  <span class="co"># Stabilize logit</span>
+        lp[i,j] &lt;-<span class="st"> </span>alpha0[j] +<span class="st"> </span>alpha[<span class="dv">1</span>] *<span class="st"> </span>elev[i] +<span class="st"> </span>alpha[<span class="dv">2</span>] *<span class="st"> </span>elev2[i] +
+<span class="st">          </span>alpha[<span class="dv">3</span>] *<span class="st"> </span>date[i,j] +<span class="st"> </span>alpha[<span class="dv">4</span>] *<span class="st"> </span>date2[i,j] +
+<span class="st">          </span>alpha[<span class="dv">5</span>] *<span class="st"> </span>dur[i,j] +<span class="st"> </span>alpha[<span class="dv">6</span>] *<span class="st"> </span>dur2[i,j] +
+<span class="st">          </span>alpha[<span class="dv">7</span>] *<span class="st"> </span>elev[i] *<span class="st"> </span>date[i,j] +<span class="st"> </span>alpha[<span class="dv">8</span>] *<span class="st"> </span>elev2[i] *<span class="st"> </span>date[i,j] +
+<span class="st">          </span>alpha[<span class="dv">9</span>] *<span class="st"> </span>elev[i] *<span class="st"> </span>dur[i,j] +<span class="st"> </span>alpha[<span class="dv">10</span>] *<span class="st"> </span>elev[i] *<span class="st"> </span>dur2[i,j] +
+<span class="st">          </span>alpha[<span class="dv">11</span>] *<span class="st"> </span>elev2[i] *<span class="st"> </span>dur[i,j] +<span class="st"> </span>alpha[<span class="dv">12</span>] *<span class="st"> </span>date[i,j] *<span class="st"> </span>dur[i,j] +
+<span class="st">          </span>alpha[<span class="dv">13</span>] *<span class="st"> </span>date[i,j] *<span class="st"> </span>dur2[i,j] +
+<span class="st">          </span>eps.p.site[i] *<span class="st"> </span>hp.site.on +<span class="st"> </span>eps.p.survey[i,j] *<span class="st"> </span>hp.survey.on
+          eps.p.survey[i,j] ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, tau.p.survey) <span class="co"># Random site-survey effects</span>
+    }
+    }
+<span class="er">)</span></code></pre></div>
 </div>
-<div id="add-stan-and-jags-for-litters" class="slide section level1">
-<h1>Add Stan and JAGS for litters?</h1>
+<div id="autoregressive-smoothing-model" class="slide section level1">
+<h1>Autoregressive smoothing model</h1>
+<p>This is also known as a Gaussian Markov random field. It's the <em>ice</em> BUGS example.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">nimbleCode</span>({
+   for (i in <span class="dv">1</span>:I) {
+      cases[i]        ~<span class="st"> </span><span class="kw">dpois</span>(mu[i]);
+      <span class="kw">log</span>(mu[i])     &lt;-<span class="st"> </span><span class="kw">log</span>(pyr[i]) +<span class="st"> </span>alpha[age[i]] +<span class="st"> </span>beta[year[i]]
+   }
+
+   betamean[<span class="dv">1</span>]    &lt;-<span class="st"> </span><span class="fl">0.0</span>; 
+   betaprec[<span class="dv">1</span>]    &lt;-<span class="st"> </span>tau*<span class="fl">1.0E-6</span>; 
+   betamean[<span class="dv">2</span>]    &lt;-<span class="st"> </span><span class="fl">0.0</span>;  
+   betaprec[<span class="dv">2</span>]    &lt;-<span class="st"> </span>tau*<span class="fl">1.0E-6</span>; 
+   for (k in <span class="dv">3</span>:K){
+      betamean[k]    &lt;-<span class="st"> </span><span class="dv">2</span>*beta[k<span class="dv">-1</span>] -<span class="st"> </span>beta[k<span class="dv">-2</span>];
+      betaprec[k]    &lt;-<span class="st"> </span>tau 
+   } 
+
+   for (k in <span class="dv">1</span>:K){
+      beta[k]        ~<span class="st"> </span><span class="kw">dnorm</span>(betamean[k],betaprec[k]);
+      logRR[k]      &lt;-<span class="st"> </span>beta[k] -<span class="st"> </span>beta[<span class="dv">5</span>]
+   }
+
+   alpha[<span class="dv">1</span>]      &lt;-<span class="st"> </span><span class="fl">0.0</span>;   
+   for (j in <span class="dv">2</span>:Nage){
+      alpha[j]       ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>,<span class="fl">1.0E-6</span>)
+   }
+   sigma ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>,<span class="dv">1</span>);
+   tau   &lt;-<span class="st"> </span><span class="dv">1</span>/(sigma*sigma);
+})</code></pre></div>
+</div>
+<div id="nimble-based-example-from-my-research" class="slide section level1">
+<h1>NIMBLE-based example from my research</h1>
+<p>Here's a model that uses user-defined distributions and functions from my own research on paleoecology.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">  sigma ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>,<span class="dv">50</span>) 
+
+  b[<span class="dv">1</span>] ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>,bMax)
+  b[<span class="dv">2</span>] ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>,bMax)
+  for(t in <span class="dv">3</span>:T){
+      ## user-defined distribution, with time-series dependence, truncation
+      b[t] ~<span class="st"> </span><span class="kw">T</span>(<span class="kw">dGenPareto</span>(<span class="dv">3</span>*b[t<span class="dv">-1</span>] -<span class="st"> </span><span class="dv">3</span>*b[t<span class="dv">-2</span>] +<span class="st"> </span>b[t<span class="dv">-3</span>], sigma), <span class="dv">0</span>, bMax)
+  }
+  
+  for(t in <span class="dv">1</span>:T){
+    ## user-defined (spline) function
+    Zb[t,<span class="dv">1</span>:nKnots] &lt;-<span class="st"> </span><span class="kw">bspline</span>(b[t], knots[<span class="dv">1</span>:nKnots])
+  }
+
+  ## vectorized linear algebra and user-defined function
+  shape1[,] &lt;-<span class="st"> </span><span class="kw">linexp</span>(Zb[,] %*%<span class="st"> </span>beta1[,], <span class="dt">J =</span> J, <span class="dt">I =</span> I)
+  shape2[,] &lt;-<span class="st"> </span><span class="kw">linexp</span>(Zb[,] %*%<span class="st"> </span>beta2[,], <span class="dt">J =</span> J, <span class="dt">I =</span> I)
+
+  ## user-defined distribution with stick-breaking multinomial representation
+  for(j in <span class="dv">1</span>:J){
+    Y[j, <span class="dv">1</span>] ~<span class="st"> </span><span class="kw">dbetabin</span>(shape1[age_index[j], <span class="dv">1</span>], shape2[age_index[j], <span class="dv">1</span>], n[j])
+    for(i in <span class="dv">2</span>:(I<span class="dv">-1</span>)){
+      Y[j, i] ~<span class="st"> </span><span class="kw">dbetabin</span>(shape1[age_index[j], i],
+                         shape2[age_index[j], i], n[j] -<span class="st"> </span><span class="kw">sum</span>(Y[j,<span class="dv">1</span>:(i<span class="dv">-1</span>)]))
+    }
+  }</code></pre></div>
+</div>
+<div id="others" class="slide section level1">
+<h1>Others</h1>
+<p>jaw-linear - dmnorm model bones: dcat with probs lsat: rasch model with prod/T/mean beetles: post-pred stuff biops: ddirch/dmulti with error spatial model?</p>
+</div>
+<div id="open-discussion-of-participant-models" class="slide section level1">
+<h1>Open discussion of participant models</h1>
 </div>
 </body>
 </html>

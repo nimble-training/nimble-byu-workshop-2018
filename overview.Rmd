@@ -49,7 +49,7 @@ Please see the [logistics document](logistics_slides.html) for information about
 
  - [A basic nimbleFunction for compiling R code](modules/compile_R_slides.html)
  - [nimbleFunction example: maximum (marginal) likelihood](modules/basic_nimbleFunction_slides.html) 
- - [Reproducible methods and 'programming with models'](modules/programming_with_models_slides.html)
+ - [Reproducible methods: *programming with models*](modules/programming_with_models_slides.html)
  - [Operating a NIMBLE model](modules/operating_model_slides.html)
  - [Inspecting model structure](modules/model_structure_slides.html)
  - [Posterior predictive sampling using nimbleFunctions](modules/full_nimbleFunction_slides.html)

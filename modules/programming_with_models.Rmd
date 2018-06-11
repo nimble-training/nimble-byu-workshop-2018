@@ -21,6 +21,7 @@ output:
  - You get flexible hierarchical modeling infrastructure "for free".
     - query model structure
     - generic calculate and simulate functions
+    - data structures for storing values from a model
  - The NIMBLE system allows you to program essentially arbitrary computations.
     - most R mathematical functionality
     - linear algebra
@@ -44,7 +45,7 @@ Applied statisticians tend to write their own model-specific code in R, Python, 
 
 Drawbacks:
 
- - parts of the code may duplicate other work
+ - parts of the code may duplicate other work, requiring additional work of the analyst
  - code may not be well-tested
 
 # Reproducible research and NIMBLE

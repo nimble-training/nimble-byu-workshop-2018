@@ -14,6 +14,7 @@ library(methods) ## needed only when building documents outside of R
 library(nimble)
 ## library(mcmcplots)
 read_chunk('chunks_litters.R')
+source("chunks_litters.R")
 ```
 
 # Automating MCMC comparisons in NIMBLE
@@ -28,17 +29,16 @@ across methods.
 
 # Example: Metropolis-Hastings vs slice sampling. NIMBLE vs. JAGS.
 
-- `compareMCMCs` and `MCMCsuite` need to build and compile the model themselves.
-- (This may become more flexible in the future.)
-- These functions provide a variety of pre-defined MCMC configurations and a system
+ - `compareMCMCs` and `MCMCsuite` need to build and compile the model themselves.
+     - (This may become more flexible in the future.)
+ - These functions provide a variety of pre-defined MCMC configurations and a system
 for providing your own.
-- I will illustrate using slice samplers instead of the default
-Metropolis-Hastings samplers for `a` and `b`.
+ - I will illustrate using slice samplers instead of the default
+Metropolis-Hastings samplers for `a` and `b` in the litters model.
 
 ```{r, prep, echo=FALSE}
 # so attendees can run code below this without using code from other modules
-if(!exists('littersModel') || !exists('cLittersModels')) source('chunks_litters.R')
-source('chunks_litters.R')
+# if(!exists('littersModel') || !exists('cLittersModels')) source('chunks_litters.R')
 ```                   
 
 Here's how we set things up to provide a customized MCMC configuration as one of the comparisons.
@@ -90,6 +90,16 @@ You can either use `MCMCsuite()` or `compareMCMCs()`. The latter allows you to p
 (I'm not showing the output here as the functions are not really designed to interface with compiling an R Markdown document.)
 
 ```{r, compareMCMC, eval=FALSE}
+littersComparisons <- compareMCMCs(
+    littersInfo,
+    MCMCs = c("jags", "nimble", "nimble_slice"),
+    MCMCdefs = MCMCdefs,
+    monitors = c("a", "b"),
+    niter = 10000,
+    burnin = 1000,
+    summary = FALSE)
+
+## or here is the MCMCsuite call
 littersResults <- MCMCsuite(
                littersCode,
                constants = littersConsts,
@@ -100,15 +110,6 @@ littersResults <- MCMCsuite(
                monitors = c("a", "b"),
                niter = 10000,
                burnin = 1000)
-
-littersComparisons <- compareMCMCs(
-    littersInfo,
-    MCMCs = c("jags", "nimble", "nimble_slice"),
-    MCMCdefs = MCMCdefs,
-    monitors = c("a", "b"),
-    niter = 10000,
-    burnin = 1000,
-    summary = FALSE)
 ```
 
 # Viewing the comparisons
@@ -119,6 +120,6 @@ make_MCMC_comparison_pages(littersComparisons,
                            modelNames = "littersComparisons")
 ```
 
-The results are [here](litters_comparison_results/littersComparisons.html)
+The results are [here](litters_comparison_results/littersComparisons.html).
 
 # Add Stan and JAGS for litters?

@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta name="generator" content="pandoc" />
   <meta name="author" content="NIMBLE Development Team" />
-  <title>Automated MCMC comparison</title>
+  <title>How NIMBLE's model language differs from BUGS and JAGS</title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
 div.sourceCode { overflow-x: auto; }
@@ -50,104 +50,261 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </head>
 <body>
 <div class="slide titlepage">
-  <h1 class="title">Automated MCMC comparison</h1>
+  <h1 class="title">How NIMBLE's model language differs from BUGS and JAGS</h1>
   <h1 class="subtitle">BYU Summer Institute on Applied Statistics workshop</h1>
   <p class="author">
 NIMBLE Development Team
   </p>
 </div>
-<div id="automating-mcmc-comparisons-in-nimble" class="slide section level1">
-<h1>Automating MCMC comparisons in NIMBLE</h1>
+<div id="how-nimble-is-the-same-as-bugs-and-jags" class="slide section level1">
+<h1>How NIMBLE is the same as BUGS and JAGS</h1>
 <ul>
-<li>NIMBLE provides tools to automatically compare MCMC efficiency across methods.</li>
-<li>Methods can include different NIMBLE MCMC configurations as well as JAGS, OpenBUGS/WinBUGS (not tested much) and Stan (separate code required).</li>
-<li>We will use <code>compareMCMCs()</code>, which calls <code>MCMCsuite()</code> internally.</li>
-<li><code>MCMCsuite()</code> can be used directly as well.</li>
-</ul>
-</div>
-<div id="example-metropolis-hastings-vs-slice-sampling.-nimble-vs.-jags." class="slide section level1">
-<h1>Example: Metropolis-Hastings vs slice sampling. NIMBLE vs. JAGS.</h1>
+<li><p>Most distributions and functions are supported</p>
 <ul>
-<li><code>compareMCMCs</code> and <code>MCMCsuite</code> need to build and compile the model themselves.
-<ul>
-<li>(This may become more flexible in the future.)</li>
+<li>For distributions, see <a href="http://r-nimble.org/manuals/NimbleUserManual.pdf#page=39">User Manual Section 5.2.4</a></li>
+<li>For functions, see <a href="http://r-nimble.org/manuals/NimbleUserManual.pdf#page=44">User Manual Section 5.2.5</a></li>
 </ul></li>
-<li>These functions provide a variety of pre-defined MCMC configurations and a system for providing your own.</li>
-<li>I will illustrate using slice samplers instead of the default Metropolis-Hastings samplers for <code>a</code> and <code>b</code> in the litters model.</li>
+<li><p>Most syntax is supported</p>
+<ul>
+<li>Truncation syntax is different when using <code>nimbleCode</code>. (It can be the same as for JAGS if reading code from a file with <code>readBUGSmodel()</code>).</li>
+</ul></li>
 </ul>
-<p>Here's how we set things up to provide a customized MCMC configuration as one of the comparisons.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersInfo &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">code =</span> littersCode,
-                   <span class="dt">constants =</span> littersConsts,
-                   <span class="dt">data =</span> littersData, <span class="dt">inits =</span> littersInits)
-
-## A function to replace default samplers with slice
-## samplers for requested nodes
-configureSlice &lt;-<span class="st"> </span>function(Rmodel, nodes) {
-    MCMCconf &lt;-<span class="st"> </span><span class="kw">configureMCMC</span>(Rmodel) ## get a default configuration
-    ## print default samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    for(node in nodes) {
-        MCMCconf$<span class="kw">removeSamplers</span>(node)
-        MCMCconf$<span class="kw">addSampler</span>(<span class="dt">target =</span> node, <span class="dt">type =</span> <span class="st">&quot;slice&quot;</span>)
-    }
-    ## print modified samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    MCMCconf
-}
-
-## A configuration list for compareMCMCs
-MCMCdefs &lt;-<span class="st"> </span><span class="kw">list</span>(
-    <span class="dt">nimble_slice =</span> <span class="kw">quote</span>({
-        ## This code will be evaluated in an environment
-        ## where 'Rmodel' is the model.
-        nodes &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">'a[1]'</span>,<span class="st">'a[2]'</span>,<span class="st">'b[1]'</span>,<span class="st">'b[2]'</span>)
-        MCMCconf &lt;-<span class="st"> </span><span class="kw">configureMCMC</span>(Rmodel) ## get a default configuration
-        ## print default samplers for illustration
-        MCMCconf$<span class="kw">printSamplers</span>(nodes)
-        for(node in nodes) {
-                 MCMCconf$<span class="kw">removeSamplers</span>(node)
-                 MCMCconf$<span class="kw">addSampler</span>(<span class="dt">target =</span> node, <span class="dt">type =</span> <span class="st">&quot;slice&quot;</span>)
+</div>
+<div id="how-nimble-extends-bugs" class="slide section level1">
+<h1>How NIMBLE extends BUGS</h1>
+<ul>
+<li>Alternative distribution parameterizations (like R).</li>
+<li>Named parameters (like R).</li>
+<li>Vectorized math and linear algebra.</li>
+<li>Definition-time if-then-else (multiple model variants from the same code).</li>
+<li>User-defined functions and distributions.</li>
+</ul>
+<h3 id="how-nimble-is-limited-compared-to-bugs-andor-jags">How NIMBLE is limited compared to BUGS and/or JAGS:</h3>
+<ul>
+<li>NIMBLE is stricter about requiring square brackets and informative indices for non-scalar nodes.</li>
+</ul>
+</div>
+<div id="r-like-alternative-and-named-parameters" class="slide section level1">
+<h1>R-like alternative and named parameters</h1>
+<p>Note named parameters in distributions.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersCode &lt;-<span class="st"> </span><span class="kw">nimbleCode</span>({
+  for (i in <span class="dv">1</span>:G) {
+     for (j in <span class="dv">1</span>:N) {
+        <span class="co"># likelihood (data model)</span>
+        r[i,j] ~<span class="st"> </span><span class="kw">dbin</span>(p[i,j], n[i,j])
+    <span class="co"># latent process (random effects)</span>
+        p[i,j] ~<span class="st"> </span><span class="kw">dbeta</span>(a[i], b[i]) 
+     }
+     <span class="co"># prior for hyperparameters</span>
+     a[i] ~<span class="st"> </span><span class="kw">dgamma</span>(<span class="dt">shape =</span> <span class="dv">1</span>, <span class="dt">rate =</span> .<span class="dv">001</span>)
+     b[i] ~<span class="st"> </span><span class="kw">dgamma</span>(<span class="dt">shape =</span> <span class="dv">1</span>, <span class="dt">scale =</span> <span class="dv">1</span>/.<span class="dv">001</span>)
+   }
+})</code></pre></div>
+<p>Note that we could have used the mean/sd parameterization of the beta distribution, which would then require different hyperparameter specification.</p>
+</div>
+<div id="extensibility-new-functions-and-distributions" class="slide section level1">
+<h1>Extensibility: new functions and distributions</h1>
+<p>We will cover this in depth later.</p>
+</div>
+<div id="distinction-between-data-and-constants" class="slide section level1">
+<h1>Distinction between data and constants</h1>
+<ul>
+<li><p>Constants must be provided to <code>nimbleModel</code></p>
+<ul>
+<li><p>Constants are values needed to define model relationships</p>
+<ul>
+<li>Index ranges like <em>N</em> in the litters model</li>
+<li>Constant vectors used for indexing: e.g., <em>block</em> in <code>mu[block[i]]</code></li>
+</ul></li>
+</ul></li>
+<li><p>Data can be provided to <code>nimbleModel</code> or later</p>
+<ul>
+<li><p>Data represents a flag on the role graph nodes play in the model</p>
+<ul>
+<li>Data nodes shouldn't be sampled in an MCMC</li>
+</ul></li>
+<li><p>Data values can be changed.</p></li>
+</ul></li>
+</ul>
+<p>Here's an example:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$<span class="kw">isData</span>(<span class="st">'r'</span>)</code></pre></div>
+<pre><code>##  [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+## [15] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+## [29] TRUE TRUE TRUE TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$<span class="kw">isData</span>(<span class="st">'p'</span>)</code></pre></div>
+<pre><code>##  [1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+## [12] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+## [23] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$r</code></pre></div>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13]
+## [1,]   13   12    9    9    8    8   12   11    9     9     8    11     4
+## [2,]   12   11   10    9   10    9    9    8    8     4     7     4     5
+##      [,14] [,15] [,16]
+## [1,]     5     7     7
+## [2,]     3     3     0</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$p</code></pre></div>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13]
+## [1,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA    NA    NA    NA
+## [2,]   NA   NA   NA   NA   NA   NA   NA   NA   NA    NA    NA    NA    NA
+##      [,14] [,15] [,16]
+## [1,]    NA    NA    NA
+## [2,]    NA    NA    NA</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$<span class="kw">simulate</span>(<span class="st">'r'</span>)</code></pre></div>
+<pre><code>## NULL</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$<span class="kw">simulate</span>(<span class="st">'p'</span>)
+littersModel$r</code></pre></div>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13]
+## [1,]   13   12    9    9    8    8   12   11    9     9     8    11     4
+## [2,]   12   11   10    9   10    9    9    8    8     4     7     4     5
+##      [,14] [,15] [,16]
+## [1,]     5     7     7
+## [2,]     3     3     0</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$p</code></pre></div>
+<pre><code>##           [,1]      [,2]      [,3]      [,4]      [,5]      [,6]      [,7]
+## [1,] 0.7035599 0.3361888 0.3816081 0.4755615 0.5789255 0.2810819 0.5423549
+## [2,] 0.4492475 0.2911108 0.6200830 0.2759724 0.3119967 0.7515556 0.7414105
+##           [,8]      [,9]     [,10]     [,11]     [,12]     [,13]     [,14]
+## [1,] 0.1836383 0.5450638 0.6980963 0.6473920 0.8948311 0.2881056 0.5629534
+## [2,] 0.6173844 0.1563387 0.2406194 0.1653893 0.3273835 0.1533343 0.2646340
+##          [,15]     [,16]
+## [1,] 0.6269458 0.3639763
+## [2,] 0.4058230 0.6916473</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersModel$<span class="kw">simulate</span>(<span class="st">'r'</span>, <span class="dt">includeData =</span> <span class="ot">TRUE</span>)
+littersModel$r</code></pre></div>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13]
+## [1,]    7    3    3    3    5    4    5    2    6     6     6    11     1
+## [2,]    2    2    7    3    5    5    8    7    0     3     3     1     1
+##      [,14] [,15] [,16]
+## [1,]     2     9     4
+## [2,]     1     5     5</code></pre>
+<ul>
+<li>NIMBLE will usually disambiguate data when it is provided as constants.</li>
+</ul>
+</div>
+<div id="constants-vs.-right-hand-side-nodes" class="slide section level1">
+<h1>Constants vs. right-hand side nodes</h1>
+<p>Regression predictors (i.e., covariates or independent variables) can be treated either as constants or as variables in the model. The latter allows one to change the values after the model is built.</p>
+<p>When a variable is specified only on the right-hand side of expression(s) in the model, it does not become a graph node in the model because it is not a parameter or data, but it is a variable in the model that can be assigned new values.</p>
+<p>(Regression predictors can also be specified as <em>data</em> though they do not play the role of data in terms of the likelihood.)</p>
+</div>
+<div id="more-explicit-need-to-provide-dimensions-in-models-not-in-nimblefunctions" class="slide section level1">
+<h1>More explicit need to provide dimensions (in models, not in nimbleFunctions)</h1>
+<ul>
+<li><p>Square brackets must always be provided to indicate number of dimensions</p>
+<ul>
+<li>If <code>x</code> is 2-dimensional, use <code>x[,] %*% beta[]</code>, not <code>x %*% beta</code></li>
+</ul></li>
+<li><p>Sometimes NIMBLE is not as smart as BUGS/JAGS at determining dimensions. There are two solutions:</p>
+<ul>
+<li>Give dimensions explicity: <code>x[1:n, 1:m]</code>, OR</li>
+<li>Provide a <code>dimensions</code> argument to <code>nimbleModel</code>. Example: <code>dimensions = list(x = c(n, m))</code>.</li>
+</ul></li>
+</ul>
+</div>
+<div id="vectorized-math-and-linear-algebra" class="slide section level1">
+<h1>Vectorized math and linear algebra</h1>
+<p>Instead of writing this in your model code:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">nimbleOptions</span>(<span class="dt">verbose =</span> <span class="ot">FALSE</span>)
+m1 &lt;-<span class="st"> </span><span class="kw">nimbleModel</span>(
+    <span class="kw">nimbleCode</span>({
+        for(i in <span class="dv">1</span>:<span class="dv">5</span>) {
+            predicted[i] &lt;-<span class="st"> </span>beta0 +<span class="st"> </span>beta1 *<span class="st"> </span>x[i]
         }
-        ## print modified samplers for illustration
-        MCMCconf$<span class="kw">printSamplers</span>(nodes)
-        MCMCconf
-    })
-)</code></pre></div>
+    }
+    ))</code></pre></div>
+<p>you can write this:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">m2 &lt;-<span class="st"> </span><span class="kw">nimbleModel</span>(
+    <span class="kw">nimbleCode</span>({
+        predicted[<span class="dv">1</span>:<span class="dv">5</span>] &lt;-<span class="st"> </span>beta0 +<span class="st"> </span>beta1 *<span class="st"> </span>x[<span class="dv">1</span>:<span class="dv">5</span>]
+    }
+    ))</code></pre></div>
+<p>These are not equivalent:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## m1 has 5 scalar nodes
+m1$<span class="kw">getNodeNames</span>()</code></pre></div>
+<pre><code>## [1] &quot;predicted[1]&quot; &quot;predicted[2]&quot; &quot;predicted[3]&quot; &quot;predicted[4]&quot;
+## [5] &quot;predicted[5]&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## m2 has 1 vector node
+m2$<span class="kw">getNodeNames</span>()</code></pre></div>
+<pre><code>## [1] &quot;predicted[1:5]&quot;</code></pre>
+<p>One is not necessarily better than the other. It depends on the model and the MCMC configuration. (More on those topics later.)</p>
+<p>Vectorized declarations do not work for distributions.</p>
+<p>Discussion topic for breaks:</p>
+<ul>
+<li>Would vectorized distribution declarations be helpful?</li>
+<li>How should they be defined?</li>
+</ul>
 </div>
-<div id="running-mcmcsuite-and-comparemcmcs" class="slide section level1">
-<h1>Running MCMCsuite and compareMCMCs</h1>
-<p>You can either use <code>MCMCsuite()</code> or <code>compareMCMCs()</code>. The latter allows you to print out some nice html plots of the comparisons.</p>
-<p>(I'm not showing the output here as the functions are not really designed to interface with compiling an R Markdown document.)</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">littersComparisons &lt;-<span class="st"> </span><span class="kw">compareMCMCs</span>(
-    littersInfo,
-    <span class="dt">MCMCs =</span> <span class="kw">c</span>(<span class="st">&quot;jags&quot;</span>, <span class="st">&quot;nimble&quot;</span>, <span class="st">&quot;nimble_slice&quot;</span>),
-    <span class="dt">MCMCdefs =</span> MCMCdefs,
-    <span class="dt">monitors =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>),
-    <span class="dt">niter =</span> <span class="dv">10000</span>,
-    <span class="dt">burnin =</span> <span class="dv">1000</span>,
-    <span class="dt">summary =</span> <span class="ot">FALSE</span>)
+<div id="definition-time-if-then-else" class="slide section level1">
+<h1>Definition-time if-then-else</h1>
+<p>If you wish to define multiple alternative models in one set of code, you can use if-then-else statements. These will be evaluated based on variables in the R environment when the model is defined. For example:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">code &lt;-<span class="st"> </span><span class="kw">nimbleCode</span>({
+    sigma ~<span class="st"> </span><span class="kw">dunif</span>(<span class="dv">0</span>, <span class="dv">10</span>)
+    beta0 ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, <span class="dt">sd =</span> <span class="dv">1000</span>)
+    beta1 ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, <span class="dt">sd =</span> <span class="dv">1000</span>)
+    if(INCLUDE_X2) { beta2 ~<span class="st"> </span><span class="kw">dnorm</span>(<span class="dv">0</span>, <span class="dt">sd =</span> <span class="dv">1000</span>) } else {}
+    for(i in <span class="dv">1</span>:<span class="dv">10</span>) {
+        if(INCLUDE_X2) {
+            y[i] ~<span class="st"> </span><span class="kw">dnorm</span>(beta0 +<span class="st"> </span>beta1 *<span class="st"> </span>x1[i] +<span class="st"> </span>beta2 *<span class="st"> </span>x2[i], <span class="dt">sd =</span> sigma)
+        } else {
+            y[i] ~<span class="st"> </span><span class="kw">dnorm</span>(beta0 +<span class="st"> </span>beta1 *<span class="st"> </span>x1[i], <span class="dt">sd =</span> sigma)
+        }
+    }
+})
 
-## or here is the MCMCsuite call
-littersResults &lt;-<span class="st"> </span><span class="kw">MCMCsuite</span>(
-               littersCode,
-               <span class="dt">constants =</span> littersConsts,
-               <span class="dt">data =</span> littersData,
-               <span class="dt">inits =</span> littersInits,
-               <span class="dt">MCMCs =</span> <span class="kw">c</span>(<span class="st">&quot;jags&quot;</span>, <span class="st">&quot;nimble&quot;</span>, <span class="st">&quot;nimble_slice&quot;</span>),
-               <span class="dt">MCMCdefs =</span> MCMCdefs,
-               <span class="dt">monitors =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>),
-               <span class="dt">niter =</span> <span class="dv">10000</span>,
-               <span class="dt">burnin =</span> <span class="dv">1000</span>)</code></pre></div>
-</div>
-<div id="viewing-the-comparisons" class="slide section level1">
-<h1>Viewing the comparisons</h1>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">make_MCMC_comparison_pages</span>(littersComparisons,
-                           <span class="dt">dir =</span> <span class="st">&quot;litters_comparison_results&quot;</span>,
-                           <span class="dt">modelNames =</span> <span class="st">&quot;littersComparisons&quot;</span>)</code></pre></div>
-<p>The results are <a href="litters_comparison_results/littersComparisons.html">here</a>.</p>
-</div>
-<div id="add-stan-and-jags-for-litters" class="slide section level1">
-<h1>Add Stan and JAGS for litters?</h1>
+INCLUDE_X2 &lt;-<span class="st"> </span><span class="ot">FALSE</span>
+m1 &lt;-<span class="st"> </span><span class="kw">nimbleModel</span>(code)
+INCLUDE_X2 &lt;-<span class="st"> </span><span class="ot">TRUE</span>
+m2 &lt;-<span class="st"> </span><span class="kw">nimbleModel</span>(code)
+m1$<span class="kw">getNodeNames</span>()</code></pre></div>
+<pre><code>##  [1] &quot;sigma&quot;                                         
+##  [2] &quot;beta0&quot;                                         
+##  [3] &quot;beta1&quot;                                         
+##  [4] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[1]&quot; 
+##  [5] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[2]&quot; 
+##  [6] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[3]&quot; 
+##  [7] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[4]&quot; 
+##  [8] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[5]&quot; 
+##  [9] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[6]&quot; 
+## [10] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[7]&quot; 
+## [11] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[8]&quot; 
+## [12] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[9]&quot; 
+## [13] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_L6[10]&quot;
+## [14] &quot;y[1]&quot;                                          
+## [15] &quot;y[2]&quot;                                          
+## [16] &quot;y[3]&quot;                                          
+## [17] &quot;y[4]&quot;                                          
+## [18] &quot;y[5]&quot;                                          
+## [19] &quot;y[6]&quot;                                          
+## [20] &quot;y[7]&quot;                                          
+## [21] &quot;y[8]&quot;                                          
+## [22] &quot;y[9]&quot;                                          
+## [23] &quot;y[10]&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">m2$<span class="kw">getNodeNames</span>()</code></pre></div>
+<pre><code>##  [1] &quot;sigma&quot;                                                                    
+##  [2] &quot;beta0&quot;                                                                    
+##  [3] &quot;beta1&quot;                                                                    
+##  [4] &quot;beta2&quot;                                                                    
+##  [5] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[1]&quot; 
+##  [6] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[2]&quot; 
+##  [7] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[3]&quot; 
+##  [8] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[4]&quot; 
+##  [9] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[5]&quot; 
+## [10] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[6]&quot; 
+## [11] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[7]&quot; 
+## [12] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[8]&quot; 
+## [13] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[9]&quot; 
+## [14] &quot;lifted_beta0_plus_beta1_times_x1_oBi_cB_plus_beta2_times_x2_oBi_cB_L8[10]&quot;
+## [15] &quot;y[1]&quot;                                                                     
+## [16] &quot;y[2]&quot;                                                                     
+## [17] &quot;y[3]&quot;                                                                     
+## [18] &quot;y[4]&quot;                                                                     
+## [19] &quot;y[5]&quot;                                                                     
+## [20] &quot;y[6]&quot;                                                                     
+## [21] &quot;y[7]&quot;                                                                     
+## [22] &quot;y[8]&quot;                                                                     
+## [23] &quot;y[9]&quot;                                                                     
+## [24] &quot;y[10]&quot;</code></pre>
+<p>m2 has <code>beta2</code> while m1 does not. The long names are &quot;lifted nodes&quot; -- more on those later.</p>
 </div>
 </body>
 </html>
