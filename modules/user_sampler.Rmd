@@ -11,7 +11,7 @@ output:
 ```{r chunksetup, include=FALSE} 
 # include any code here you don't want to show up in the document,
 # e.g. package and dataset loading
-library(methods)  # otherwise new() not being found - weird
+library(methods)  # otherwise new() not being found 
 library(nimble)
 ```
 
@@ -44,8 +44,8 @@ RW_reflect <- nimbleFunction(
         targetComponents <- model$expandNodeNames(target, returnScalarComponents = TRUE)
         if(length(targetComponents) > 1)
                 stop("RW_reflect: cannot use univariate RW sampler on multivariate target, try RW_block sampler.")
-        rg <- getDistribution(dist)$range
-        if(rg[1] > -Inf || rg[2] < Inf)
+        rg <- getDistributionInfo(dist)$range
+        if(rg[[1]] > -Inf || rg[[2]] < Inf)
                   reflect <- TRUE else reflect <- FALSE
 
         calcNodes  <- model$getDependencies(target)
@@ -78,7 +78,7 @@ RW_reflect <- nimbleFunction(
 ```
 
 
-Comment: We used some functionality that may not be fully explained in NIMBLE's documentation. For this sort of thing, you can always ask a question in the NIMBLE user Google group. 
+Comment: We used some functionality that may not be fully explained in NIMBLE's documentation. For this sort of thing, you can always ask a question in the NIMBLE users Google group. 
 
 # NIMBLE's Metropolis sampler
 
@@ -109,7 +109,7 @@ RW_reflect <- nimbleFunction(
         ### ADDED code ############################################
         dist <- model$getDistribution(target)
         rg <- getDistributionInfo(dist)$range
-        if(rg[1] > -Inf || rg[2] < Inf)
+        if(rg[[1]] > -Inf || rg[[2]] < Inf)
                   reflect <- TRUE else reflect <- FALSE
         ###########################################################
 
@@ -219,7 +219,7 @@ assign('RW_reflect', RW_reflect, .GlobalEnv)
 Now we'll try the reflection sampler instead. We can just assign it as a sampler
 in the way we've seen before.
 
-```{r, add-reflect}
+```{r, add-reflect, fig.cap=''}
 conf$removeSamplers('tau')
 # for comparison, consider the reflection sampler
 conf$addSampler('tau', type = 'RW_reflect')
@@ -236,11 +236,9 @@ plot(seq_len(nplot), smp1[seq_len(nplot), 'tau'], type = 'l',
                      xlab = 'iteration', ylab=expression(tau))
 lines(seq_len(nplot), smp2[seq_len(nplot), 'tau'], col = 'red')
 library(coda, quietly = TRUE)
-effectiveSize(log(smp1[(burnin+1):niter , 'tau']))
-effectiveSize(log(smp2[(burnin+1):niter , 'tau']))
 ```
 
-So we see that the sampler escaped from near zero more quickly. However, even with a run of 25000 iterations, the effective sample size is still small for both samplers.
+So we see that the sampler escaped from near zero more quickly. However, even with a run of 25000 iterations, the MCMC is not mixing very well.
 
 Side note: the random effects variance component in this model is given a gamma prior on the precision scale, but best practices for random effects variance components, including a strong argument against the gamma/inverse-gamma prior, can be found in Gelman (2006, Bayesian Analysis 1:515-534).
 

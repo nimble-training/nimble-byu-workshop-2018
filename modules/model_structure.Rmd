@@ -19,6 +19,8 @@ read_chunk("chunks.R")
 
 Now let's explore how to understand the dependence structure of a model. After all the model is a directed acyclic graph, so we should be able to work with that graph structure.
 
+We'll demo this using the AFT survival model from the [example models](example_models_slides.Rmd). I'll make a slight tweak to the model and use a multivariate normal prior distribution for *delta* in order to illustrate some additional concepts.
+
 We first need to build the model.
 
 ```{r, aft-code}
@@ -30,8 +32,7 @@ codeAFT <- nimbleCode({
     }
     eta ~ dunif(b0, B0) ## base measure H_b
     alpha ~ dunif(a0, A0)
-    for(j in 1:p)
-        delta[j] ~ dflat()
+    delta[1:p] ~ dmnorm(mu[1:p], cov = Sigma[1:p, 1:p])
 })
 ```
 
@@ -55,7 +56,8 @@ HGB <- (HGB - mean(HGB)) / sd(HGB)
 
 nSub = 15
 constants = list(b0 = -10, B0 = 10, a0 = 0.1, A0 = 10, p = 2, n = n,
-                 c = cens_time, Z = cbind(logBUN, HGB), nSub = nSub)
+                 c = cens_time, Z = cbind(logBUN, HGB), nSub = nSub,
+                 mu = rep(0, 2), Sigma = diag(2))
 data = list(is_cens = as.numeric(alive), x = time)
 xInit <- rep(NA, n)
 xInit[alive] <- cens_time[alive] + 10
@@ -71,16 +73,10 @@ The parameters and data in a model are represented as nodes in a graph. Here we 
  - parameter: an unknown quantity in the model that is represented as a random variable and will generally be estimated in an algorithm, e.g. `alpha` in the AFT model
  - data: a known quantity in a model, also represented as a random variable, e.g., `x[,1], x[2], ...` in the AFT model
  - constants: other fixed quantities involved in the model, e.g., `n` in the AFT model
- - node: an element in the model representing data, parameter, or a deterministic quantity that is a function of other quantities in the model, e.g., `delta[2]` in the AFT model
- - variable: a collection of one or more nodes with the same name, e.g., `delta` or `xi` in the AFT model
+ - node: an element in the model graph representing data, parameter, or a deterministic quantity that is a function of other quantities in the model, e.g., `alpha`, `lambda[2]`, or `delta[1:2]` in the AFT model
+ - variable: a collection of one or more nodes with the same name, e.g., `delta` or `xi` in the AFT model. 
 
-Note, if we have a multivariate distribution, then the node includes all of the elements, e.g.,
-
-```
-mu[1:p] ~ dmnorm(mu0[1:p], cov = Sigma[1:p, 1:p])
-```
-
-has `mu[1:p]` as a node and `mu` as a variable. 
+Note, if we have a multivariate distribution, then the node includes all of the elements: `delta[1:2]` is the node and `delta` is the variable. 
 
 # Querying nodes and variables
 
@@ -90,10 +86,12 @@ What are the nodes in the model? What are the dependencies of a given node (this
 
 
 ```{r, model-nodes}
-model$getNodeNames()
+nodes <- model$getNodeNames()
+nodes[c(1:7, 70:73, 135:138, 200:203)]
 top <- model$getNodeNames(topOnly = TRUE)
 top
-model$getDependencies('eta')
+etaDeps <- model$getDependencies('eta')
+etaDeps[c(1:4, 67:69, 132:134)]
 ```
 
 # Data nodes
@@ -113,7 +111,7 @@ There are a variety of options to `getNodeNames()` and `getDependencies` that al
 args(model$getDependencies)
 args(model$getNodeNames)
 
-latents <- model$getNodeNames(latentOnly = TRUE, stochOnly = TRUE)
+latents <- model$getNodeNames(latentOnly = TRUE, stochOnly = TRUE, includeData = FALSE)
 latents
 model$getDependencies(latents, determOnly = TRUE)
 model$getNodeNames(dataOnly = TRUE)

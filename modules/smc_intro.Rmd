@@ -11,15 +11,13 @@ output:
 
 Sequential Monte Carlo is a family of algorithms for iteratively sampling from a posterior distribution generally in state-space style models:
 
-$$
-y_t \sim g_t(y_t | x_t, \theta)
-x_t \sim f_t(x_t | x_{t-1}, \theta)
-$$ 
+$$ y_t \sim g_t(y_t | x_t, \theta)$$
+$$ x_t \sim f_t(x_t | x_{t-1}, \theta) $$ 
 
 Some goals in analyzing such models include:
 
  - filtering (online estimation): determining $p(x_T | y_{1:T}, \theta)$
- - smoothing: determining the (conditional) posterior $p(x_{1:T} | y_{1:T}, \theta$
+ - smoothing: determining the (conditional) posterior $p(x_{1:T} | y_{1:T}, \theta)$
  - parameter estimation: determining $p(\theta | y_{1:T})$ 
  - likelihood calculation: determining $p(y_{1:T} | \theta)$
 
@@ -41,13 +39,16 @@ This is just a partial list, focused on methods included in NIMBLE.
 
 The basic idea is to approximate the filtering distribution using a sample. We start with an initial sample (not conditioned on the data) and then propagate the sample forward in time, reweighting each element of the sample based on how well it matches the model density at time t (i.e., the prior for $x_t$ and likelihood for $y_t$), and then sampling the new set of particles based on the weights. 
 
+This treats $\theta$ as known, so it does not appear in the notation.
+
 Here's pseudo-code for the bootstrap filter, where
-  - $q$ is a proposal distribution that propagates the sample forward in time
-  - $w_t$ and $\pi_t$ are (unnormalized) weights and (normalized) weights
+
+   - $q$ is a proposal distribution that propagates the sample forward in time
+   - $w_t$ and $\pi_t$ are (unnormalized) weights and (normalized) weights
 
 <center><img src="boot_algo.png"></center>
 
-As stated, this treats $\theta$ as known, so it does not appear in the notation.
+
 
 # Particle filtering: basic ideas (2)
 
@@ -66,9 +67,10 @@ A wide variety of methods have been proposed to address these issues.
 
 # Particle MCMC
 
-Note that at each step, one can get a Monte Carlo estimate of $p(y_t|y_{1:t-1}, theta)$, so one can multiply to estimate $p(y_{1:T}|\theta)$.
+Note that at each step, one can get a Monte Carlo estimate of $p(y_t|y_{1:t-1}, \theta)$, so one can multiply to estimate $p(y_{1:T}|\theta)$.
 
 Recall that for MCMC,
- - high-dimensional latent process values in non-conjugate models often result in bad mixing
- - ideally, we'd like to integrate over $x_{1:T}$ and do MCMC only on hyperparameters
- - SMC algorithms allow us to estimate the marginal likelihood so could be embedded within MCMC for the hyperparameters
+
+   - High-dimensional latent process values in non-conjugate models often result in bad mixing.
+   - Ideally, we'd like to integrate over $x_{1:T}$ and do MCMC only on hyperparameters, $\theta$.
+   - SMC algorithms allow us to estimate the marginal likelihood so could be embedded within MCMC for the hyperparameters.

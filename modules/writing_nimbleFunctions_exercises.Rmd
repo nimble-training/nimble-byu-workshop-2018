@@ -7,7 +7,10 @@ output:
     code_folding: show
 ---
 
- - Let's consider using a nimbleFunction to replace a for loop that can't be avoided in R. Write a second order random walk using a nimbleFunction. Here's the code for the R version. 
+# Exercise 1
+
+
+Let's consider using a nimbleFunction to replace a for loop that can't be avoided in R. Write a second order random walk using a nimbleFunction. Here's the code for the R version. 
 
 ```{r, markov-exer, eval=FALSE}
 set.seed(0)
@@ -39,4 +42,6 @@ system.time(path <- cmc(n, rho1, rho2))
 
 Extra:  Use *nimStop()* as part of an error check that ensures that the length of the path to be sampled is longer than the order of the dependence. 
 
- - Write a nimbleFunction that will simulate from the prior for an arbitrary model $m$ times and store the results in a modelValues object. (E.g., this could be used as part of a simulation study.) Time how long this takes running both the uncompiled and compiled nimbleFunction on a model of your choice. (Feel free to use the litters model.)
+# Exercise 2
+
+2) Write a nimbleFunction that will simulate from the prior for an arbitrary model $m$ times and store the results in a modelValues object. (E.g., this could be used as part of a simulation study.) Time how long this takes running both the uncompiled and compiled nimbleFunction on a model of your choice. (Feel free to use the litters model.)

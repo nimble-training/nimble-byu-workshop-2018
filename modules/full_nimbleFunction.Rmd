@@ -11,9 +11,9 @@ output:
 ```{r chunksetup, include=FALSE} 
 # include any code here you don't want to show up in the document,
 # e.g. package and dataset loading
-library(methods)  # otherwise new() not being found - weird
+library(methods)  # otherwise new() not being found 
 library(nimble)
-read_chunk('chunks.R')
+read_chunk('chunks_litters_marginal.R')
 ```
 
 # Components of a nimbleFunction
@@ -25,16 +25,16 @@ Thus, a nimbleFunction has two parts:
  - setup code: used to tailor the algorithm to a particular model structure. Often this involves determining dependencies amongst nodes in the model and setting up storage using *modelValues*
  - run code: the guts of the algorithm, written generically so it will apply to any (appropriate) model
 
-Setup code is written as a R function, using R code, usually including NIMBLE's special functions for querying the model structure (see the module *model_structure*). 
+Setup code is written as a R function, using R code, usually including NIMBLE's special functions for [querying the model structure](modules/model_structure_slides.html).
 
-Run code is written using the NIMBLE *domain-specific language* (DSL). While this is formally a language distinct from R, you can just think of it as a subset of R, enhanced with some functions for operating on the model (see the module *operating_model*). 
+Run code is written using the NIMBLE *domain-specific language* (DSL). While this is formally a language distinct from R, you can just think of it as a subset of R, enhanced with some functions for [operating on the model](modules/operating_model_slides.html).
 
 
 # Using `modelValues` objects to store sets of node values for a model
 
 A common need is to store multiple sets of values for model variables, such as MCMC output, sets of particles for a particle filter, or an input sample for importance sampling.
 
-NIMBLE provides a `modelValues` class for this purpose.  A `modelValues` class can be created to hold the variables in a model or any other sets of variables you define.
+NIMBLE provides the *modelValues* class for this purpose.  A *modelValues* object can be created to hold the variables in a model or any other sets of variables you define.
 
 Like models and algorithms, modelValues objects have uncompiled and compiled versions that can be used in (mostly) the same ways.
 
@@ -43,15 +43,15 @@ Like models and algorithms, modelValues objects have uncompiled and compiled ver
 Let's walk through an example where we use the functionality we've discussed above and more:
 
  - querying model structure in setup code
- - using modelValues storage
- - using nested nimbleFunctions (in this case using existing algorithm code for an MCMC)
+ - using *modelValues* storage
+ - using *nested* nimbleFunctions (in this case using existing algorithm code for an MCMC)
  - copying into and out of models and modelValues
 
 We'll do this by writing a generic marginalized sampling nimbleFunction.
 
-Why is this useful?
+Why is this nimbleFunction useful?
 
-By marginalizing, we reduce dimensionality so we (generally) reduce the number of computations and (generally) reduce posterior dependence. But we often are interested in inference for the marginalized quantities.
+By marginalizing, we reduce dimensionality so we (generally) reduce the number of computations and (generally) reduce posterior dependence. But we often are interested in inference for the marginalized quantities so we need to sample them post hoc (often on a thinned version of the original MCMC to save time and storage).
 
 # Example: nimbleFunction for sampling marginalized parameters
 
@@ -61,7 +61,10 @@ Let's construct our (generic) nimbleFunction:
 
 ```{r nf-marginal}
 margSampler <- nimbleFunction(
-            setup = function(fullModel, samples, target) {
+            setup = function(fullModel, samplesMarg, target) {
+                  ## samplesMarg is a matrix of samples from the marginalized model
+                  ## target contains the nodes that have been integrated over that we want to sample from
+
                   ## setup MCMC only for integrated-over nodes
                   conf <- configureMCMC(fullModel, nodes = target, monitors = target)
                   
@@ -71,29 +74,31 @@ margSampler <- nimbleFunction(
                   if(length(samplers) != length(grep("conjugate", samplers)))
                      stop("Not all samplers are conjugate")
 
+                  ## note: haven't thought through if this is ok for multiple levels of marginalization...
+
                   ## check samples have all the nodes in marginalized model
                       allNodes <- fullModel$getNodeNames(stochOnly = TRUE, includeData = FALSE)
                       targetNodes <- fullModel$expandNodeNames(target)
                       margNodes <- allNodes[!allNodes %in% targetNodes]
                       neededVars <- fullModel$getVarNames(nodes = margNodes)
-                      margMCMCvars <- fullModel$getVarNames(nodes = dimnames(samples)[[2]])
+                      margMCMCvars <- fullModel$getVarNames(nodes = dimnames(samplesMarg)[[2]])
                       if(any(!neededVars %in% margMCMCvars))
-                         stop("Some needed variables not present in samples for marginalized model")
+                         stop("Some needed variables not present in samplesMarg for marginalized model")
                   
                   ## create MCMC object and modelValues for full model
                   mcmc <- buildMCMC(conf)
-                  mvSamplesConf  <- conf$getMvSamplesConf(1)
-                  newMV <- modelValues(mvSamplesConf, m = 1)
+                  mvSamplesConf  <- conf$getMvSamplesConf(1)  ## modelValues 'configuration' ('1' is the first primary set of samples)
+                  newMV <- modelValues(mvSamplesConf, m = 1)  ## default storage (m=1 row) for new samples
             },
-            run = function(samples = double(2)) {
+            run = function(samplesMarg = double(2)) {
                   ## dynamically determine how many samples we will get
-                  ## ('samples' might have been updated since setup code was run)
-                  nIts <- dim(samples)[1]
+                  ## ('samplesMarg' might have been updated since setup code was run)
+                  nIts <- dim(samplesMarg)[1]
                   resize(newMV, nIts)
 
                   ## sample integrated-over nodes once per thinned iteration of original MCMC
                   for(i in 1:nIts) {
-                      values(fullModel, margMCMCvars) <<- samples[i, ]
+                      values(fullModel, margMCMCvars) <<- samplesMarg[i, ]
                       mcmc$run(1, reset = FALSE, progressBar = FALSE)
                       copy(fullModel, newMV, nodes = targetNodes, row = i)
                   }
@@ -103,8 +108,13 @@ margSampler <- nimbleFunction(
 
 # Example: litters model
                 
+```{r, prep}
+# so attendees can run code below this without using code from other modules
+if(!exists('littersModel') || !exists('cLittersModel')) source('chunks_litters.R')
+if(!exists('littersMargModel') || !exists('cLittersMargModel')) source('chunks_litters_marginal.R')
+```                   
 
-```{r}
+```{r, run-predictive, fig.width=5, fig.height=5, fig.cap=''}
 littersMargModel <- nimbleModel(littersMargCode, 
           data = littersData, constants = littersConsts, inits = littersInits)
 cLittersMargModel <- compileNimble(littersMargModel)
@@ -114,21 +124,26 @@ littersMargMCMC <- buildMCMC(littersMargConf)
 cLittersMargMCMC <- compileNimble(littersMargMCMC, project = littersMargModel)
 niter <- 5000
 nburnin <- 1000
-samples <- runMCMC(cLittersMargMCMC, niter, nburnin)
+samplesMarginal <- runMCMC(cLittersMargMCMC, niter, nburnin)
 
 littersModel <- nimbleModel(littersCode, 
           data = littersData, constants = littersConsts, inits = littersInits)
 cLittersModel <- compileNimble(littersModel)
 
-rMargSampler <- margSampler(littersModel, samples, 'p')
+rMargSampler <- margSampler(littersModel, samplesMarginal, 'p')
 cMargSampler <- compileNimble(rMargSampler, project = littersModel)
-cMargSampler$run(samples)
+cMargSampler$run(samplesMarginal)
 fullSamples <- as.matrix(cMargSampler$newMV)
+
+dim(fullSamples)
+dimnames(fullSamples)[[2]]
+ts.plot(fullSamples[ , 1])
+
 ```
 
 # Comments
 
 - In general, you should pass uncompiled models and modelValues into nimbleFunction setup code. 
-- In general, you can assume that anything in a nimbleFunction will get compiled, so you don't need to worry about whether the modelValues or any nimbleFunctions you use within a nimbleFunction are compiled or uncompiled.
+- In general, you can assume that anything in a nimbleFunction will get compiled when the nimbleFunction is compiled, so you don't need to worry about whether the modelValues or any nimbleFunctions you use within a nimbleFunction are compiled or uncompiled.
 
 
