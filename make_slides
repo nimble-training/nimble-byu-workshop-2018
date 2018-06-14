@@ -1,7 +1,7 @@
 #! /usr/bin/Rscript
 # usage:
-# ./make_slides example
-# ./make_slides bugs
+# ./make_slides overview
+# cd modules; ../make_slides nimble_bugs
 # etc.
 
 library(knitr)

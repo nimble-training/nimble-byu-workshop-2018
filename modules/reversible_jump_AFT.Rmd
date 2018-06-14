@@ -56,7 +56,7 @@ codeAFTsel <- nimbleCode({
     xi[1:n] ~ dCRP(conc, size = n) ## CRP for mixture components
     conc ~ dgamma(1, 1)
     for(i in 1:nSub)
-        etaTilde[i] ~ dunif(b0, B0) ## base measure H_b
+        etaTilde[i] ~ dunif(b0, B0) ## base measure G_0
     alpha ~ dunif(a0, A0)
     for(j in 1:p)
         delta[j] ~ dflat()
@@ -89,13 +89,15 @@ $$ q = \frac{p(y|\theta^r,M^r)p(\theta^r|M^r)J(u^*) }{p(y|\theta^f,M^f)p(\theta^
 
 # RJ sampler setup code
 
+The RJ sampler will operate on the indicator of whether questionable variable is in the model or not, since that indicator is what changes the model dimension.
+
 The setup code needs to determine the nodes involved in the full model and the reduced model, where the reduced model omits the variable under consideration.
 
 
 ```{r, setup-rj, eval=FALSE}
  setup = function( model, mvSaved, target, control ) {
    # target = 'indic'
-   coefNode <- control$coef   # 'delta[2]'
+   coefNode <- control$coef   # e.g., 'delta[2]'
    scale    <- control$scale  # could be made adaptive
    # with variable
    calcNodes_full <- model$getDependencies(c(coefNode, target))
@@ -116,7 +118,7 @@ run = function( ) {  # Reversible-jump updates:
    if(currentIndicator == 0) { ## propose adding z2 to model
      currentLogProb <- model$getLogProb(calcNodes_reduced)
      proposalCoef <- rnorm(1, 0, sd = scale)
-     model[[target]] <<- 1
+     model[[target]] <<- 1      # put proposal values in model
      model[[coefNode]] <<- proposalCoef
      logProbForwardProposal <- 
                 dnorm(proposalCoef, 0, sd = scale, log = TRUE)
@@ -136,6 +138,7 @@ run = function( ) {  # Reversible-jump updates:
                         currentLogProb + 
                         logProbReverseProposal
    }
+   ## additional book-keeping code to go here
 }   
 ```
 
@@ -148,15 +151,15 @@ RJ_var_sel <- nimbleFunction(
  contains = sampler_BASE,
  setup = function( model, mvSaved, target, control ) {
    # target = 'indic'
-   coefNode <- control$coef   # 'delta[2]'
-   scale    <- control$scale  # could be made adaptive)
+   coefNode <- control$coef   
+   scale    <- control$scale  # could be made adaptive
    # with variable
    calcNodes_full <- model$getDependencies(c(coefNode, target))
    # without variable (don't calculate prior for coefNode since not in model)
    calcNodes_reduced <- model$getDependencies(target)
  },
 run = function( ) {  # Reversible-jump updates:
-   currentIndicator <- model[[target]]   # get current z2
+   currentIndicator <- model[[target]]   
    if(currentIndicator == 0) { ## propose adding z2 to model
      currentLogProb <- model$getLogProb(calcNodes_reduced)
      proposalCoef <- rnorm(1, 0, sd = scale)
@@ -170,10 +173,10 @@ run = function( ) {  # Reversible-jump updates:
                         logProbForwardProposal
    } else {                   ## propose removing z2
      currentLogProb <- model$getLogProb(calcNodes_full)
-     currentCoef <- model[[coefNode]]      # get current beta2
+     currentCoef <- model[[coefNode]]      
      logProbReverseProposal <- 
                  dnorm(currentCoef, 0, sd = scale, log = TRUE)   
-     model[[target]] <<- 0      # put proposal values in model
+     model[[target]] <<- 0      
      model[[coefNode]] <<- 0
      model$calculate(calcNodes_full) # calculate proposal log probabilities
      logAcceptProb <- model$getLogProb(calcNodes_reduced) -
@@ -242,14 +245,16 @@ model <- nimbleModel(codeAFTsel, constants = constants, data = data, inits = ini
 cmodel = compileNimble(model)
 conf <- configureMCMC(model, thin = 10, monitors = c('alpha', 'delta', 'indic'))
 conf$removeSamplers(c('alpha', 'delta', 'etaTilde', 'indic'))
-conf$addSampler('alpha','slice')
-conf$addSampler('delta[1]','slice')
+
+## for example, we'll use all slice samplers
+conf$addSampler('alpha', 'slice')
+conf$addSampler('delta[1]', 'slice')
 for(node in model$expandNodeNames('etaTilde'))
     conf$addSampler(node,'slice')
 
 ## special changes for variable selection:
-conf$addSampler('delta[2]','slice_var_sel_wrapper', control = list(indicator = 'indic'))
 conf$addSampler('indic', 'RJ_var_sel', control = list(coef = 'delta[2]', scale = 0.5))
+conf$addSampler('delta[2]', 'slice_var_sel_wrapper', control = list(indicator = 'indic'))
 
 mcmc <- buildMCMC(conf)
 cmcmc <- compileNimble(mcmc, project = model)

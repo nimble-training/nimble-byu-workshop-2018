@@ -17,16 +17,11 @@ library(nimble)
 
 # Introduction
 
-Here we'll consider a real example, doing a semiparametric accelerated failure time (AFT) survival analysis. We'll start with a standard random effects meta analysis and then robustify the analysis using Bayesian nonparametric methods.
-
-To use this code, you'll need to install NIMBLE from our Github repository:
-
-```{r, install-nimble, eval=FALSE}
-library(devtools)
-install_github('nimble-dev/nimble/packages/nimble', ref = 'BNP')
-```
+Here we'll consider another real example, doing a semiparametric accelerated failure time (AFT) survival analysis. 
 
 # Accelerated failure time model
+
+(Note I'm changing notation: for this example, $\alpha$ will be the first parameter of the Weibull distribution and *conc* will be the DP/CRP concentration parameter.)
 
 A parametric Weibull AFT model is $T \sim \mbox{Weibull}(\alpha, \lambda)$.
 
@@ -48,23 +43,23 @@ so the effect of the covariates is to scale time, hence 'accelerated failure tim
 
 (Think one dog-year equals seven human-years.)
 
-## Semiparametric AFT model
+# Semiparametric AFT model
 
 To remove the parametric Weibull assumption, [one approach](https://www4.stat.ncsu.edu/~ghosal/papers/PMR.pdf) is to use a mixture of Weibull distributions, mixing over $\mu$:
 
 $$ f(t) = \sum_k w_k \mbox{Weibull}(\alpha, \mu_k \exp(z^\top \delta)) $$
 
-And of course if we don't want to have to choose the number of components a Dirichlet process specification is natural.
+And of course if we don't want to have to choose the number of components then a Dirichlet process specification is natural.
 
 We can express this as:
 
 $$ T_i \sim \mbox{Weibull}(\alpha, \mu_i \exp(Z^\top \delta)) $$
 
-with IID $\mu_i$ from unknown distribution, $H(\cdot)$
+with IID $\mu_i$ from unknown distribution, $G(\cdot)$
 
 $$ \mu_i \sim H(\cdot) $$
 
-where that distribution has a Dirichlet process prior, $H(\cdot) \sim DP(\mbox{conc}, H_b(\cdot))$ with base measure $H_b(\cdot)$. 
+where that distribution has a Dirichlet process prior, $G(\cdot) \sim DP(\mbox{conc}, G_0(\cdot))$ with base measure $G_0(\cdot)$. 
 
 
 # Multiple myeloma analysis with the semiparametric AFT model
@@ -105,7 +100,7 @@ codeAFT <- nimbleCode({
     xi[1:n] ~ dCRP(conc, size = n) ## CRP for mixture components
     conc ~ dgamma(1, 1)
     for(i in 1:nSub)    ## cap the number of clusters for faster computation
-        etaTilde[i] ~ dunif(b0, B0) ## base measure H_b
+        etaTilde[i] ~ dunif(b0, B0) ## base measure G_0
     alpha ~ dunif(a0, A0)
     for(j in 1:p)
         delta[j] ~ dflat()
@@ -123,7 +118,7 @@ Now let's run the MCMC. A couple comments:
       - We can reduce model building and MCMC time substantially by capping the number of clusters.
       - Here we use 15.
       - NIMBLE will warn us if the MCMC ever tries to use more than that (in which case the formal DP model is technically not actually being used).
-  - We'll discuss the censoring and implications for what are 'data' and 'parameters' in the next unit.
+  - Recall our discussion of censoring and implications for what are 'data' and 'parameters' in the [example models](example_models_slides.html).
       
 ```{r, aft-mcmc, fig.cap='', fig.width=8, fig.height=5}
 nSub = 15
@@ -201,16 +196,11 @@ codeAFTstick <- nimbleCode({
         z[i] ~ dbeta(1, conc)
 
     for(i in 1:nSub) 
-        etaTilde[i] ~ dunif(b0, B0)           ## base measure H_b
+        etaTilde[i] ~ dunif(b0, B0)           ## base measure G_0
     conc ~ dgamma(1, 1) 
     alpha ~ dunif(a0, A0)
     for(j in 1:p)
         delta[j] ~ dflat()
 })
 ```
-
-# Exercises
-
-  - Explore MCMC mixing with and without slice sampling for the different forms of the model.
-  - Configure the MCMC for the stick-breaking representation of the model and verify that conjugacy is detected for $z$.
 

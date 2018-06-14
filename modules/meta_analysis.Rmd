@@ -11,7 +11,7 @@ output:
 ```{r chunksetup, include=FALSE} 
 # include any code here you don't want to show up in the document,
 # e.g. package and dataset loading
-library(methods)  # otherwise new() not being found - weird
+library(methods)  # otherwise new() not being found 
 library(nimble)
 ```
 
@@ -19,20 +19,13 @@ library(nimble)
 
 Here we'll consider a real example, doing a meta-analysis. We'll start with a standard random effects meta analysis and then robustify the analysis using Bayesian nonparametric methods.
 
-Note that Bayesian nonparametrics (BNP) using Dirichlet process and related methods are not yet in the CRAN version of NIMBLE as we are just finalizing the initial functionality.
 
-To use the BNP versions of the meta analysis, you'll need to install NIMBLE from our Github repository:
-
-```{r, install, eval=FALSE}
-library(devtools)
-install_github('nimble-dev/nimble/packages/nimble', ref = 'BNP')
-```
 
 # Meta analysis example
 
 As most of you will probably know, meta analysis seeks to combine results across multiple studies of the same phenomenon to increase power. It's often applied to clinical trials.
 
-The example is of the side effects of a very popular drug for diabetes called Avandia. The question is whether Avandia uses increases the risk of myocardial infarction (heart attack). There are 48 studies (the 49th study in the data file is different in some ways and excluded here), each with treatment and control arms.
+The example is of the side effects of a very popular drug for diabetes called Avandia. The question is whether Avandia use increases the risk of myocardial infarction (heart attack). There are 48 studies (the 49th study in the data file is different in some ways and excluded here), each with treatment and control arms.
 
 ```{r, avandia-view}
 dat <- read.csv('avandia.csv')
@@ -71,7 +64,7 @@ codeParam <- nimbleCode({
 })
 ```
 
-$\theta$ quantifies the difference in risk between the control and treatment arms, while the $\gamma[i]$ quantify study-specific variation using normally-distributed random effects.
+$\theta$ quantifies the difference in risk between the control and treatment arms, while the $\gamma_i$ quantify study-specific variation using normally-distributed random effects.
 
 # Running the MCMC
 
@@ -94,7 +87,7 @@ hist(samples[1000, gammaCols], xlab = 'single draw of random effects',
                    main = 'random effects distribution')
 ```
 
-What about the normality assumption - estimated distributions seem skewed PLUS these are generated under the normality assumption!
+What about the normality assumption - could the estimated distributions be skewed (and remember that these are generated under the normality assumption).
 
 
 # DP-based random effects modeling for meta analysis
@@ -106,9 +99,8 @@ codeBNP <- nimbleCode({
         x[i] ~ dbin(size = n[i], prob = p[i]) # control MIs
         q[i] <- expit(theta + gamma[i])       # Avandia log-odds
         p[i] <- expit(gamma[i])               # control log-odds
-        gamma[i] ~ dnorm(mu[i], var = tau[i]) # random effects (from mixture)
-        mu[i] <- muTilde[xi[i]]               # mean for component assigned to i'th study
-        tau[i] <- tauTilde[xi[i]]             # variance for component assigned to i'th study
+        gamma[i] ~ dnorm(muTilde[xi[i]],      # random effects (from mixture)
+                     var = tauTilde[xi[i]])   # with mean/var from one component of mixture
     }
     # mixture component parameters drawn from base measures
     for(i in 1:nStudies) {
@@ -127,7 +119,7 @@ codeBNP <- nimbleCode({
 })
 ```
 
-The specification is a bit complicated, but just think of it as a nonparametric extension to a mixture of normal distributions as the random effects distribution for $\gamma[i]$, but where we don't fix the maximum number of components.
+The specification is a bit complicated, but just think of it as using a nonparametric extension to a mixture of normal distributions as the random effects distribution for $\gamma_i$, but where we don't fix the maximum number of components.
 
 # Running an MCMC for the DP-based meta analysis
 
