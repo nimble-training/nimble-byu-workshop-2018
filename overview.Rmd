@@ -24,61 +24,61 @@ Please see the [logistics document](logistics_slides.html) for information about
 
 # (Session 1) Introduction to NIMBLE
 
- - [Overview of NIMBLE](modules/nimble_background_slides.html)
- - [The BUGS language](modules/bugs_language_slides.html)
- - [Building a model in NIMBLE](modules/build_model_slides.html)
- - [Running an MCMC](modules/run_mcmc_slides.html) 
- - [Goals and key ideas of NIMBLE](modules/nimble_principles_slides.html)
+ - [Overview of NIMBLE](modules/1.1_nimble_background_slides.html)
+ - [The BUGS language](modules/1.2_bugs_language_slides.html)
+ - [Building a model in NIMBLE](modules/1.3_build_model_slides.html)
+ - [Running an MCMC](modules/1.4_run_mcmc_slides.html) 
+ - [Goals and key ideas of NIMBLE](modules/1.5_nimble_principles_slides.html)
 
 # (Session 2) MCMC in NIMBLE
 
- - [MCMC principles](modules/mcmc_principles_slides.html)
- - [Customizing an MCMC](modules/customizing_mcmc_slides.html)
- - [NIMBLE's MCMC comparison tools](modules/compareMCMC_slides.html)
- - [Extended example: the litters model](modules/customizing_mcmc_extended_slides.html)
- - [Exercise: customizing an MCMC](modules/mcmc_exercises_slides.html)
+ - [MCMC principles](modules/2.1_mcmc_principles_slides.html)
+ - [Customizing an MCMC](modules/2.2_customizing_mcmc_slides.html)
+ - [NIMBLE's MCMC comparison tools](modules/2.3_compareMCMC_slides.html)
+ - [Extended example: the litters model](modules/2.4_customizing_mcmc_extended_slides.html)
+ - [Exercise: customizing an MCMC](modules/2.5_mcmc_exercises_slides.html)
 
 # (Session 3) Writing models in NIMBLE
 
- - [NIMBLE's dialect of BUGS](modules/nimble_bugs.html)
- - [Some example models](modules/example_models_slides.html)
- - [User-defined distributions](modules/user_dist_slides.html) 
- - [Exercise: writing your own distribution](modules/user_dist_exercises_slides.html) 
+ - [NIMBLE's dialect of BUGS](modules/3.1_nimble_bugs.html)
+ - [Some example models](modules/3.2_example_models_slides.html)
+ - [User-defined distributions](modules/3.3_user_dist_slides.html) 
+ - [Exercise: writing your own distribution](modules/3.4_user_dist_exercises_slides.html) 
 
 # (Session 4) Introduction to programming in NIMBLE with nimbleFunctions
 
- - [A basic nimbleFunction for compiling R code](modules/compile_R_slides.html)
- - [nimbleFunction example: maximum (marginal) likelihood](modules/basic_nimbleFunction_slides.html) 
- - [Reproducible methods: *programming with models*](modules/programming_with_models_slides.html)
- - [Operating a NIMBLE model](modules/operating_model_slides.html)
- - [Inspecting model structure](modules/model_structure_slides.html)
- - [Posterior predictive sampling using nimbleFunctions](modules/full_nimbleFunction_slides.html)
- - [Exercise: writing a nimbleFunction](modules/writing_nimbleFunctions_exercises_slides.html)
+ - [A basic nimbleFunction for compiling R code](modules/4.1_compile_R_slides.html)
+ - [nimbleFunction example: maximum (marginal) likelihood](modules/4.2_basic_nimbleFunction_slides.html) 
+ - [Reproducible methods: *programming with models*](modules/4.3_programming_with_models_slides.html)
+ - [Operating a NIMBLE model](modules/4.4_operating_model_slides.html)
+ - [Inspecting model structure](modules/4.5_model_structure_slides.html)
+ - [Posterior predictive sampling using nimbleFunctions](modules/4.6_full_nimbleFunction_slides.html)
+ - [Exercise: writing a nimbleFunction](modules/4.7_writing_nimbleFunctions_exercises_slides.html)
 
 # (Session 5) Programming MCMC samplers
 
- - [A basic Metropolis-Hastings sampler](modules/nimbleFunction_samplers_slides.html)
- - [Writing your own MCMC sampler](modules/user_sampler_slides.html)
- - [Exercise: writing your own MCMC sampler](modules/user_sampler_exercises_slides.html)
+ - [A basic Metropolis-Hastings sampler](modules/5.1_nimbleFunction_samplers_slides.html)
+ - [Writing your own MCMC sampler](modules/5.2_user_sampler_slides.html)
+ - [Exercise: writing your own MCMC sampler](modules/5.3_user_sampler_exercises_slides.html)
 
 # (Session 6) Writing algorithms with Sequential Monte Carlo as an example
 
- - [Introduction to sequential Monte Carlo](modules/smc_intro_slides.html)
- - [NIMBLE's SMC algorithms](modules/smc_nimble_slides.html)
- - [Particle MCMC](modules/particle_mcmc_slides.html)
- - [Revisiting reproducible methods](modules/reproducibility_revisited_slides.html)
+ - [Introduction to sequential Monte Carlo](modules/6.1_smc_intro_slides.html)
+ - [NIMBLE's SMC algorithms](modules/6.2_smc_nimble_slides.html)
+ - [Particle MCMC](modules/6.3_particle_mcmc_slides.html)
+ - [Revisiting reproducible methods](modules/6.4_reproducibility_revisited_slides.html)
 
 # (Session 7) Bayesian nonparametrics (BNP)
 
- - [Introduction to Dirichlet process models and nonparametric density estimation](modules/bnp_intro_slides.html)
- - [Case study: Meta-analysis with nonparametric random effects](modules/meta_analysis_slides.html)
- - [Case study: Survival analysis via a semiparametric Accelerated Failure Time (AFT) model](modules/survival_analysis_slides.html)
- - [MCMC samplers revisited: reversible jump for variable selection in the AFT model](modules/reversible_jump_AFT_slides.html)
- - [Exercise: writing a BNP model](modules/bnp_exercises_slides.html)
+ - [Introduction to Dirichlet process models and nonparametric density estimation](modules/7.1_bnp_intro_slides.html)
+ - [Case study: Meta-analysis with nonparametric random effects](modules/7.2_meta_analysis_slides.html)
+ - [Case study: Survival analysis via a semiparametric Accelerated Failure Time (AFT) model](modules/7.3_survival_analysis_slides.html)
+ - [MCMC samplers revisited: reversible jump for variable selection in the AFT model](modules/7.4_reversible_jump_AFT_slides.html)
+ - [Exercise: writing a BNP model](modules/7.5_bnp_exercises_slides.html)
 
 # (Session 8) Additional topics
  - Extended worked example, discussion of participant examples, additional time for skipped topics, or additional details on topics.
- - [Final thoughts](modules/final_thoughts_slides.html)
+ - [Final thoughts](modules/8.1_final_thoughts_slides.html)
  
 # Acknowledgements and legal stuff
 
