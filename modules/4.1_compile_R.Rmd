@@ -94,6 +94,8 @@ benchmark(out0 <- exp(cos(sin(x)) + x^3),
                replications = 10)
 ```
 
+We could also time uncompiled execution of the nimbleFunction but it will generally be even slower than directly coding in R. The main purpose of running a nimbleFunction in R is debugging. You can step through execution of an uncompiled nimbleFunction using R's debugging tools as usual.
+
 # A more involved example
 
 Consider probit regression, which is similar to logistic regression. The probability of a binary outcome is given as

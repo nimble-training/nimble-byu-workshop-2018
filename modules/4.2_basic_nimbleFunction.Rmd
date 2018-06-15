@@ -53,11 +53,14 @@ Here are some of the functions you may use in the run function of a nimbleFuncti
  - *print()* and *cat()*
  - basic math, including vectorized math and some linear algebra
  - random number generation functions, e.g., ```rnorm(1, 100, 5)``` 
- - calling out to arbitrary R or C/C++ code with *nimbleRcall()* and *nimbleExternalCall()*.
+ - calling out to arbitrary R or C/C++ code with *nimbleRcall()* and *nimbleExternalCall()*
+ - *nimbleList* data structures.
 
 
 Chapter 10 of the NIMBLE User Manual describes the syntax for *run* code in detail, including lots of neat functionality such as using nested nimbleFunctions and having multiple run-time functions (i.e., class methods) as part of a nimbleFunction.
 
+nimbleFunctions use **pass-by-reference** not R style **pass-by-value**, so be careful about modifying an object and then using it elsewhere.
+  
 
 # A basic example: empirical Bayes / maximum marginal likelihood
 

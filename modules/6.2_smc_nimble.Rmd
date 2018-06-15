@@ -75,6 +75,8 @@ samples <- as.matrix(cSvBootFilter$mvEWSamples) ## equally-weighted samples from
 
 # Stochastic volatility results
 
+Here's the estimated volatility based on the filtering distribution, so not the full posterior estimate. There are algorithms that produce the smoothing distribution, though the one implemented in NIMBLE for the bootstrap filter is a basic one. 
+
 ```{r, sv-results, fig.width=10, fig.height=6, fig.cap=''}
 par(mfrow = c(1,2))
 ts.plot(y, main = 'observations')
@@ -95,3 +97,29 @@ Each time step has its own nimbleFunction, because we need fully model-generic c
 We'll look directly at the code in [`filtering_bootstrap.R`](filtering_bootstrap.R).
 
 The overall filtering nimbleFunction simply iterates through each individual time step function and builds up the overall likelihood from the time step-specific pieces.
+
+
+# Lists of nimbleFunctions
+
+The bootstrap filter created a list of nimbleFunctions, one for each time step. Here's what the code in the overall bootstrap filter nimbleFunction setup code looks like:
+
+```{r, nimbleFunctionLists, eval=FALSE}
+    bootStepFunctions <- nimbleFunctionList(bootStepVirtual)
+    for(iNode in seq_along(nodes)){
+       bootStepFunctions[[iNode]] <- bootFStep(model, mvEWSamples, mvWSamples,
+                                              nodes, iNode, names, saveAll,
+                                              smoothing, resamplingMethod,
+                                              silent) 
+    }
+```
+
+The key steps are:
+
+   - define a 'virtual' nimbleFunction that is a *base class* (basically a skeleton function)
+   - define a *nimbleFunctionList* based on that virtual nimbleFunction
+   - create each individual nimbleFunction by calling a nimbleFunction generator that inherits from the virtual nimbleFunction
+
+Then one can call the run function or other run-time methods of the elements of the list of nimbleFunctions in the run code of the overall nimbleFunction.
+
+Similarly, an MCMC is composed of a list of individual sampler functions (of which we've seen many examples) specialized to nodes of a model.
+
