@@ -26,7 +26,7 @@ We try to be responsive on the the user support/discussion list, and heartily we
   - Automatic derivatives (coming very soon):
     - Better samplers
     - Hamiltonian Monte Carlo
-    - Laplace approximation & Gaussian quadrature
+    - Laplace approximation and quadrature
     - Maximum likelihood
   - Improved scalability (in progress)
     - Faster model and algorithm building and compilation

@@ -33,10 +33,11 @@ As a result, researchers fall back to hand-coding their analyses or methods, or 
 
 # How does NIMBLE do this?
 
- - you can extend BUGS with your own distributions and functions
- - algorithms are written in a high-level R-like syntax that is easily understandable
- - we provide a platform for writing a variety of algorithms with model manipulation primitives that don't have to be reinvented and that operate on BUGS-based models
- - we provide a core set of algorithms, in particular a full MCMC engine 
+ - You can extend BUGS with your own distributions and functions
+ - Algorithms are written in a high-level R-like syntax that is easily understandable
+ - We provide a platform for writing a variety of algorithms with model manipulation primitives that don't have to be reinvented and that operate on BUGS-based models
+ - We provide a core set of algorithms, in particular a full MCMC engine
+     - You can extend our MCMC engine with your own samplers
 
 # Reference
 

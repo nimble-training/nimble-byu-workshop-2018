@@ -243,3 +243,36 @@ So we see that the sampler escaped from near zero more quickly. However, even wi
 Side note: the random effects variance component in this model is given a gamma prior on the precision scale, but best practices for random effects variance components, including a strong argument against the gamma/inverse-gamma prior, can be found in Gelman (2006, Bayesian Analysis 1:515-534).
 
 
+# Required arguments and methods for a sampler `nimbleFunction`
+
+- It must contain the argument `contains = sampler_BASE`.
+
+    - (This is a simple class inheritance system that mimic's R's `contains` argument.)
+
+- The `setup` function must take the arguments `model`, `mvSaved`, `target`, and `control`.
+
+    - `model` is the model being sampled.
+    - `mvSaved` is a length-one *modelValues* object that keeps an up-to-date copy of all model values, including log probabilities.
+    - `target` is a vector of node names to be sampled.
+    - `control` is a list that can contain whatever elements you want.
+
+- The `run` function (method) must execute the sampler.
+
+- The `reset` method must reset the sampler if that means anything for the particular sampler.
+
+    - Example: An adaptive sampler would reset its proposal distribution.
+
+
+# Required behavior of a sampler:
+
+- Upon entry, the sampler can assume that `mvSaved[[1]]` contains a complete copy of the model's variables, including logProb variables.
+
+- The sampler may do whatever it wants (assuming it is valid for MCMC) in its `run` function, including modifying values of model variables, including logProb variables.
+
+- Upon exiting the `run` function, `mvSaved[[1]]` must again contain a complete copy of the model's variables, including logProb variables.
+
+    - The `mvSaved[[1]]` is like the "current" state of the model.
+    - The `run` function puts proposed values in the model and does appropriate calculations.
+    - If the proposal is rejected: copy from `mvSaved[[1]]` to the model.
+    - If the proposal is accepted: copy from the model to `mvSaved[[1]]`.
+

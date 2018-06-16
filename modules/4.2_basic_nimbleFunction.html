@@ -177,9 +177,11 @@ $(document).ready(function () {
 <li><em>print()</em> and <em>cat()</em></li>
 <li>basic math, including vectorized math and some linear algebra</li>
 <li>random number generation functions, e.g., <code>rnorm(1, 100, 5)</code></li>
-<li>calling out to arbitrary R or C/C++ code with <em>nimbleRcall()</em> and <em>nimbleExternalCall()</em>.</li>
+<li>calling out to arbitrary R or C/C++ code with <em>nimbleRcall()</em> and <em>nimbleExternalCall()</em></li>
+<li><em>nimbleList</em> data structures.</li>
 </ul>
-<p>Chapter 10 of the NIMBLE User Manual describes the syntax for <em>run</em> code in detail, including lots of neat functionality such as using nested nimbleFunctions and having multiple run-time functions (i.e., class methods) as part of a nimbleFunction.</p>
+<p>Chapter 10 of the NIMBLE User Manual describes the syntax for <em>run</em> code in detail, including lots of neat functionality such as using nested nimbleFunctions and having multiple run-time functions (i.e., class methods) as part of a nimbleFunction. We’ll see more of that in future modules.</p>
+<p>nimbleFunctions use <strong>pass-by-reference</strong> not R style <strong>pass-by-value</strong>, so be careful about modifying an object and then using it elsewhere.</p>
 </div>
 <div id="a-basic-example-empirical-bayes-maximum-marginal-likelihood" class="section level1">
 <h1>A basic example: empirical Bayes / maximum marginal likelihood</h1>
@@ -271,10 +273,10 @@ cLittersMargModel &lt;- compileNimble(littersMargModel)</code></pre>
 <p>Now let’s try using it.</p>
 <pre class="r"><code>system.time(optR &lt;- optim(log(rep(1,4)), rObjective$run, control = list(fnscale = -1)))</code></pre>
 <pre><code>##    user  system elapsed 
-##   3.192   0.000   3.191</code></pre>
+##   3.236   0.000   3.235</code></pre>
 <pre class="r"><code>system.time(optC &lt;- optim(log(rep(1,4)), cObjective$run, control = list(fnscale = -1)))</code></pre>
 <pre><code>##    user  system elapsed 
-##   0.016   0.000   0.018</code></pre>
+##   0.020   0.000   0.018</code></pre>
 <pre class="r"><code>optR</code></pre>
 <pre><code>## $par
 ## [1]  3.5802268  0.4638447  1.4091323 -0.5817455

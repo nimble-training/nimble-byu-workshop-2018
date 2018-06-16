@@ -355,6 +355,41 @@ lines(seq_len(nplot), smp2[seq_len(nplot), 'tau'], col = 'red')</code></pre>
 <p>So we see that the sampler escaped from near zero more quickly. However, even with a run of 25000 iterations, the MCMC is not mixing very well.</p>
 <p>Side note: the random effects variance component in this model is given a gamma prior on the precision scale, but best practices for random effects variance components, including a strong argument against the gamma/inverse-gamma prior, can be found in Gelman (2006, Bayesian Analysis 1:515-534).</p>
 </div>
+<div id="required-arguments-and-methods-for-a-sampler-nimblefunction" class="section level1">
+<h1>Required arguments and methods for a sampler <code>nimbleFunction</code></h1>
+<ul>
+<li><p>It must contain the argument <code>contains = sampler_BASE</code>.</p>
+<ul>
+<li>(This is a simple class inheritance system that mimic’s R’s <code>contains</code> argument.)</li>
+</ul></li>
+<li><p>The <code>setup</code> function must take the arguments <code>model</code>, <code>mvSaved</code>, <code>target</code>, and <code>control</code>.</p>
+<ul>
+<li><code>model</code> is the model being sampled.</li>
+<li><code>mvSaved</code> is a length-one <em>modelValues</em> object that keeps an up-to-date copy of all model values, including log probabilities.</li>
+<li><code>target</code> is a vector of node names to be sampled.</li>
+<li><code>control</code> is a list that can contain whatever elements you want.</li>
+</ul></li>
+<li><p>The <code>run</code> function (method) must execute the sampler.</p></li>
+<li><p>The <code>reset</code> method must reset the sampler if that means anything for the particular sampler.</p>
+<ul>
+<li>Example: An adaptive sampler would reset its proposal distribution.</li>
+</ul></li>
+</ul>
+</div>
+<div id="required-behavior-of-a-sampler" class="section level1">
+<h1>Required behavior of a sampler:</h1>
+<ul>
+<li><p>Upon entry, the sampler can assume that <code>mvSaved[[1]]</code> contains a complete copy of the model’s variables, including logProb variables.</p></li>
+<li><p>The sampler may do whatever it wants (assuming it is valid for MCMC) in its <code>run</code> function, including modifying values of model variables, including logProb variables.</p></li>
+<li><p>Upon exiting the <code>run</code> function, <code>mvSaved[[1]]</code> must again contain a complete copy of the model’s variables, including logProb variables.</p>
+<ul>
+<li>The <code>mvSaved[[1]]</code> is like the “current” state of the model.</li>
+<li>The <code>run</code> function puts proposed values in the model and does appropriate calculations.</li>
+<li>If the proposal is rejected: copy from <code>mvSaved[[1]]</code> to the model.</li>
+<li>If the proposal is accepted: copy from the model to <code>mvSaved[[1]]</code>.</li>
+</ul></li>
+</ul>
+</div>
 
 
 

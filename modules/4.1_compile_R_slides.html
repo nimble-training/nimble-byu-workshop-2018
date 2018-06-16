@@ -124,9 +124,10 @@ cNimMath2 &lt;-<span class="st"> </span><span class="kw">compileNimble</span>(ni
                 <span class="dt">columns =</span> <span class="kw">c</span>(<span class="st">'test'</span>,<span class="st">'replications'</span>,<span class="st">'elapsed'</span>),
                <span class="dt">replications =</span> <span class="dv">10</span>)</code></pre></div>
 <pre><code>##                             test replications elapsed
-## 1 out0 &lt;- exp(cos(sin(x)) + x^3)           10   3.475
-## 2           out1 &lt;- cNimMath1(x)           10   2.777
-## 3           out2 &lt;- cNimMath2(x)           10   2.801</code></pre>
+## 1 out0 &lt;- exp(cos(sin(x)) + x^3)           10   3.620
+## 2           out1 &lt;- cNimMath1(x)           10   2.950
+## 3           out2 &lt;- cNimMath2(x)           10   3.008</code></pre>
+<p>We could also time uncompiled execution of the nimbleFunction but it will generally be even slower than directly coding in R. The main purpose of running a nimbleFunction in R is debugging. You can step through execution of an uncompiled nimbleFunction using R's debugging tools as usual.</p>
 </div>
 <div id="a-more-involved-example" class="slide section level1">
 <h1>A more involved example</h1>
@@ -188,7 +189,7 @@ K &lt;-<span class="st"> </span><span class="kw">length</span>(alphas)
         props
 })</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   2.820   0.112   2.932</code></pre>
+##   3.272   0.112   3.385</code></pre>
 </div>
 <div id="c-style-implementation-in-nimble" class="slide section level1">
 <h1>C-style implementation in NIMBLE</h1>
@@ -247,12 +248,12 @@ K &lt;-<span class="st"> </span><span class="kw">length</span>(alphas)
 props2 &lt;-<span class="st"> </span><span class="kw">cmprobit</span>(alphas, M)
 )</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.524   0.000   0.526</code></pre>
+##   0.568   0.000   0.568</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(
 props3 &lt;-<span class="st"> </span><span class="kw">cmprobitVec</span>(alphas, M)
 )</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.728   0.000   0.729</code></pre>
+##   0.864   0.000   0.860</code></pre>
 <p>Any speculation as to why the vectorized implementation is slower?</p>
 <p>So we get a nice six-fold speedup, even though all of the R code was vectorized. In the exercises, you can practice with an example of replacing an explicit for loop in R.</p>
 </div>

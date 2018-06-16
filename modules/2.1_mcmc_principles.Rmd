@@ -62,3 +62,14 @@ NIMBLE allows:
         - More computation; sometimes greatly increases dimensionality
         - More 'levels' increases dependence across levels; moves parameters 'further' from data
 
+# Some strategies for improving MCMC (in NIMBLE)
+
+  - Identify and focus on the worst-mixing parameters
+  - Blocking
+  - Try various samplers
+  - Think like the graph:
+      - Write vectorized deterministic and stochastic BUGS declarations for parameters that will be sampled in a block
+      - Avoid vectorized BUGS declarations for parameters that will be sampled individually
+  - Defer posterior-predictive sampling until after the main MCMC for parameter estimation.
+
+(Note that vectorization in (compiled) nimbleFunctions often has little effect because loops are fast in compiled code.)
