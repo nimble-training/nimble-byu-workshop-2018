@@ -167,10 +167,14 @@ matrixMult(A, x)
 
 So far, so good.  Now let's compile it:
 
-```{r compile-matrix-mult}
+```{r compile-matrix-mult, eval=FALSE}
 CmatrixMult <- try(compileNimble(matrixMult))
 CmatrixMult
 ```
+
+(Note that there's an issue in this slide and the next page with
+the error causing problems compiling the HTML, so I'm not showing
+the actual code execution and output here.)
 
 # Type trickiness: What is the problem?
 
@@ -190,7 +194,7 @@ Solutions:
 These kinds of type errors can be more confusing when they are not
 easy for the NIMBLE compiler to catch and explain.
 
-```{r harder-error}
+```{r harder-error, eval=FALSE}
 matrixMult2 <- nimbleFunction(
     run = function(A = double(2), x = double(1)) {
         ## Say for some reason we already have used y as a vector
@@ -207,6 +211,7 @@ CmatrixMult2
 ```
 
 The NIMBLE compiler has caught the error, but it is more confusing.
+(Again, not shown in the HTML.)
 
 Since `y` was used as a vector first, it cannot be used as a matrix
 (static typing).

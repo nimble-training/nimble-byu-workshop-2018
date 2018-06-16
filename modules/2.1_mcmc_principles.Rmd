@@ -55,7 +55,7 @@ NIMBLE allows:
 - Data augmentation:
     - Examples:
         - Chib and Albert probit regression 'trick'
-        - t distribution as mixture of normal distributions (see Gelman et al. Bayesian Data Analysis)
+        - t distribution as mixture of normal distributions (see Gelman et al. Bayesian Data Analysis for sampling tips)
     - Advantages
         - May allow for conjugate or other useful samplers; particular helpful for multivariate blocks
     - Disadvantages

@@ -122,9 +122,12 @@ cat("model {
    }
 }", file = file.path(tempdir(), "tmp.bug"))
 
+set.seed(2)  ## note: some other seeds result in slice sampler being stuck
+inits <- littersInits
+inits$p <- matrix(0.5, G, N)
 model <- jags.model(file = file.path(tempdir(), 'tmp.bug'),
       data = list(G = G, N = N, n = n, r = r),
-      n.adapt = nburn, n.chains = 1, inits = littersInits)
+      n.adapt = nburn, n.chains = 1, inits = inits)
       
 samples <- jags.samples(model, variable.names = c('a','b'), n.iter = niter)
 

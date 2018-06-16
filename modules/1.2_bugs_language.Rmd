@@ -47,7 +47,7 @@ We'll see a variety of example models this afternoon.
 
 # NIMBLE's dialect of BUGS
 
-   - The BUGS syntax used in NIMBLE has minor differences from that used in WinBUGS, OpenBUGS and/or JAGS. We'll see some of this as we go along, in particular in the [module on NIMBLE's dialet of BUGS](3.1_nimble_bugs_slides.html).
+   - The BUGS syntax used in NIMBLE has minor differences from that used in WinBUGS, OpenBUGS and/or JAGS. We'll see some of this as we go along, in particular in the [module on NIMBLE's dialect of BUGS](3.1_nimble_bugs_slides.html).
    - Also described in Section 5 of the [NIMBLE Users Manual](https://r-nimble.org/manuals/NimbleUserManual.pdf) and in this [blog post](https://r-nimble.org/quick-guide-for-converting-from-jags-or-bugs-to-nimble).
 
 # A basic example

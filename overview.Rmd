@@ -40,7 +40,7 @@ Please see the [logistics document](logistics_slides.html) for information about
 
 # (Session 3) Writing models in NIMBLE
 
- - [NIMBLE's dialect of BUGS](modules/3.1_nimble_bugs.html)
+ - [NIMBLE's dialect of BUGS](modules/3.1_nimble_bugs_slides.html)
  - [Some example models](modules/3.2_example_models_slides.html)
  - [User-defined distributions](modules/3.3_user_dist_slides.html) 
  - [Exercise: writing your own distribution](modules/3.4_user_dist_exercises_slides.html) 

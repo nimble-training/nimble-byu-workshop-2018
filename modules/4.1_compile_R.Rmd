@@ -225,7 +225,7 @@ Any speculation as to why the vectorized implementation is slower?
 
 So we get a nice six-fold speedup, even though all of the R code was vectorized. In the exercises, you can practice with an example of replacing an explicit for loop in R.
 
-# Using nimbleFunctions in BUGS code
+# Using nimbleFunctions in BUGS code (user-defined functions)
 
 You can write a nimbleFunction like the above examples and use them directly in your BUGS code to define a model.
 

@@ -230,14 +230,5 @@ Here's a model that uses user-defined distributions and functions from my own re
   }
 ```
 
-# Others
-
-jaw-linear - dmnorm model
-bones: dcat with probs
-lsat: rasch model with prod/T/mean
-beetles: post-pred stuff
-biops: ddirch/dmulti with error
-spatial model?
-
-# Open discussion of participant models
+# Open discussion of participant models and possible model constructs
 
