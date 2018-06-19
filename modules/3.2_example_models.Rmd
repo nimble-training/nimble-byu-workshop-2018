@@ -30,7 +30,6 @@ nimbleCode({
         is_cens[i] ~ dinterval(x[i], c[i])  
         lambda[i] <- exp(eta + Z[i,1]*delta[1] + Z[i,2]*delta[2])
     }
-    conc ~ dgamma(1, 1)
     eta ~ dunif(b0, B0) 
     alpha ~ dunif(a0, A0)
     for(j in 1:2)
@@ -46,13 +45,15 @@ For observations that are right-censored we:
  - set `x[i] = NA`
  - set `c[i]` to be the censoring time
 
-Then the dinterval probability is one only if `x[i] > c[i]`.
+With `is_cens[i] = 1`, the dinterval probability is one only if `x[i] > c[i]`.
 
 For observations that are not censored we:
 
  - set `is_cens[i] = 0`
  - set `x[i]` to be the data value
- - set `c[i]` to be `Inf` (or some value greater than `x[i]`
+ - set `c[i]` to be `Inf` (or some value greater than `x[i]`)
+
+With `is_cens[i] = 0`, the dinterval probability is one only if `x[i] <= c[i]`.
 
 # GLMM regression model
 

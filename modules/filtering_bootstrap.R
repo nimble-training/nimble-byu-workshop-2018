@@ -83,18 +83,13 @@ bootFStep <- nimbleFunction(
       simulate(model, thisNode)
       copy(model, mvWSamples, nodes = thisNode, nodesTo = thisXName, row = i)
       calculate(model, thisDeterm)
-      wts[i]  <- calculate(model, thisData)
+      wts[i]  <- calculate(model, thisData) + wts[i]
       if(is.nan(wts[i])){
         out[1] <- -Inf
         out[2] <- 0
         return(out)
       }
-      if(prevSamp == 0){
-        llEst[i] <- wts[i] + mvWSamples['wts',i][prevInd]
-      }
-      else{
-          llEst[i] <- wts[i] - log(m)
-      }
+      llEst[i] <- wts[i] - log(m)
     }
     
     stepllEst <- log(sum(exp(llEst)))
@@ -124,7 +119,6 @@ bootFStep <- nimbleFunction(
         ids <- resamplerFunctionList[[1]]$run(wts)  
       }
       ## out[2] is an indicator of whether resampling takes place.
-      ## Resampling affects how ll estimate is calculated at next time point.
       out[2] <- 1
       for(i in 1:m){
         copy(mvWSamples, mvEWSamples, nodes = thisXName, nodesTo = thisXName,

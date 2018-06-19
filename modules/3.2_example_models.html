@@ -156,7 +156,6 @@ $(document).ready(function () {
         is_cens[i] ~ dinterval(x[i], c[i])  
         lambda[i] &lt;- exp(eta + Z[i,1]*delta[1] + Z[i,2]*delta[2])
     }
-    conc ~ dgamma(1, 1)
     eta ~ dunif(b0, B0) 
     alpha ~ dunif(a0, A0)
     for(j in 1:2)
@@ -169,13 +168,14 @@ $(document).ready(function () {
 <li>set <code>x[i] = NA</code></li>
 <li>set <code>c[i]</code> to be the censoring time</li>
 </ul>
-<p>Then the dinterval probability is one only if <code>x[i] &gt; c[i]</code>.</p>
+<p>With <code>is_cens[i] = 1</code>, the dinterval probability is one only if <code>x[i] &gt; c[i]</code>.</p>
 <p>For observations that are not censored we:</p>
 <ul>
 <li>set <code>is_cens[i] = 0</code></li>
 <li>set <code>x[i]</code> to be the data value</li>
-<li>set <code>c[i]</code> to be <code>Inf</code> (or some value greater than <code>x[i]</code></li>
+<li>set <code>c[i]</code> to be <code>Inf</code> (or some value greater than <code>x[i]</code>)</li>
 </ul>
+<p>With <code>is_cens[i] = 0</code>, the dinterval probability is one only if <code>x[i] &lt;= c[i]</code>.</p>
 </div>
 <div id="glmm-regression-model" class="section level1">
 <h1>GLMM regression model</h1>

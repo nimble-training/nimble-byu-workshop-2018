@@ -70,7 +70,6 @@ NIMBLE Development Team
         is_cens[i] ~<span class="st"> </span><span class="kw">dinterval</span>(x[i], c[i])  
         lambda[i] &lt;-<span class="st"> </span><span class="kw">exp</span>(eta +<span class="st"> </span>Z[i,<span class="dv">1</span>]*delta[<span class="dv">1</span>] +<span class="st"> </span>Z[i,<span class="dv">2</span>]*delta[<span class="dv">2</span>])
     }
-    conc ~<span class="st"> </span><span class="kw">dgamma</span>(<span class="dv">1</span>, <span class="dv">1</span>)
     eta ~<span class="st"> </span><span class="kw">dunif</span>(b0, B0) 
     alpha ~<span class="st"> </span><span class="kw">dunif</span>(a0, A0)
     for(j in <span class="dv">1</span>:<span class="dv">2</span>)
@@ -83,13 +82,14 @@ NIMBLE Development Team
 <li>set <code>x[i] = NA</code></li>
 <li>set <code>c[i]</code> to be the censoring time</li>
 </ul>
-<p>Then the dinterval probability is one only if <code>x[i] &gt; c[i]</code>.</p>
+<p>With <code>is_cens[i] = 1</code>, the dinterval probability is one only if <code>x[i] &gt; c[i]</code>.</p>
 <p>For observations that are not censored we:</p>
 <ul>
 <li>set <code>is_cens[i] = 0</code></li>
 <li>set <code>x[i]</code> to be the data value</li>
-<li>set <code>c[i]</code> to be <code>Inf</code> (or some value greater than <code>x[i]</code></li>
+<li>set <code>c[i]</code> to be <code>Inf</code> (or some value greater than <code>x[i]</code>)</li>
 </ul>
+<p>With <code>is_cens[i] = 0</code>, the dinterval probability is one only if <code>x[i] &lt;= c[i]</code>.</p>
 </div>
 <div id="glmm-regression-model" class="slide section level1">
 <h1>GLMM regression model</h1>
