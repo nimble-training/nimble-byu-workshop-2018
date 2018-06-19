@@ -51,7 +51,8 @@ stochVolConf <- configureMCMC(stochVolModel, nodes = NULL,
     monitors = c('beta', 'phi', 'sigma' , 'x'))
 stochVolConf$addSampler(target = c('beta', 'phiStar', 'sigma' , 'x0'),
                                type = 'RW_PF_block', control = list(propCov = .1 * diag(4),
-                               pfType = 'auxiliary', adaptive = TRUE, pfNparticles = 200,
+                               pfType = 'auxiliary', pfControl = list(thresh = 1),
+                               adaptive = TRUE, pfNparticles = 200,
                                latents = 'x', pfResample = TRUE))
                                
 stochVolMCMC <- buildMCMC(stochVolConf)

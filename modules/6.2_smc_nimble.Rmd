@@ -67,7 +67,7 @@ CstochVolModel <- compileNimble(stochVolModel)
 
 ```{r, sv-filter}
 svBootFilter <- buildBootstrapFilter(stochVolModel, nodes = 'x',
-                       control = list(saveAll = TRUE, thresh = .9))
+                       control = list(saveAll = TRUE, thresh = 1.0))
 cSvBootFilter <- compileNimble(svBootFilter, project = stochVolModel)
 cSvBootFilter$run(10000)
 samples <- as.matrix(cSvBootFilter$mvEWSamples) ## equally-weighted samples from filtering distribution
