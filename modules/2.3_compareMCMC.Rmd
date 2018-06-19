@@ -48,21 +48,6 @@ littersInfo <- list(code = littersCode,
                    constants = littersConsts,
                    data = littersData, inits = littersInits)
 
-## A function to replace default samplers with slice
-## samplers for requested nodes
-configureSlice <- function(Rmodel, nodes) {
-    MCMCconf <- configureMCMC(Rmodel) ## get a default configuration
-    ## print default samplers for illustration
-    MCMCconf$printSamplers(nodes)
-    for(node in nodes) {
-        MCMCconf$removeSamplers(node)
-        MCMCconf$addSampler(target = node, type = "slice")
-    }
-    ## print modified samplers for illustration
-    MCMCconf$printSamplers(nodes)
-    MCMCconf
-}
-
 ## A configuration list for compareMCMCs
 MCMCdefs <- list(
     nimble_slice = quote({
@@ -122,4 +107,3 @@ make_MCMC_comparison_pages(littersComparisons,
 
 The results are [here](litters_comparison_results/littersComparisons.html).
 
-# Add Stan and JAGS for litters?

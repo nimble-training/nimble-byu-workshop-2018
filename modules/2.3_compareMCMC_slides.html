@@ -80,21 +80,6 @@ NIMBLE Development Team
                    <span class="dt">constants =</span> littersConsts,
                    <span class="dt">data =</span> littersData, <span class="dt">inits =</span> littersInits)
 
-## A function to replace default samplers with slice
-## samplers for requested nodes
-configureSlice &lt;-<span class="st"> </span>function(Rmodel, nodes) {
-    MCMCconf &lt;-<span class="st"> </span><span class="kw">configureMCMC</span>(Rmodel) ## get a default configuration
-    ## print default samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    for(node in nodes) {
-        MCMCconf$<span class="kw">removeSamplers</span>(node)
-        MCMCconf$<span class="kw">addSampler</span>(<span class="dt">target =</span> node, <span class="dt">type =</span> <span class="st">&quot;slice&quot;</span>)
-    }
-    ## print modified samplers for illustration
-    MCMCconf$<span class="kw">printSamplers</span>(nodes)
-    MCMCconf
-}
-
 ## A configuration list for compareMCMCs
 MCMCdefs &lt;-<span class="st"> </span><span class="kw">list</span>(
     <span class="dt">nimble_slice =</span> <span class="kw">quote</span>({
@@ -145,9 +130,6 @@ littersResults &lt;-<span class="st"> </span><span class="kw">MCMCsuite</span>(
                            <span class="dt">dir =</span> <span class="st">&quot;litters_comparison_results&quot;</span>,
                            <span class="dt">modelNames =</span> <span class="st">&quot;littersComparisons&quot;</span>)</code></pre></div>
 <p>The results are <a href="litters_comparison_results/littersComparisons.html">here</a>.</p>
-</div>
-<div id="add-stan-and-jags-for-litters" class="slide section level1">
-<h1>Add Stan and JAGS for litters?</h1>
 </div>
 </body>
 </html>

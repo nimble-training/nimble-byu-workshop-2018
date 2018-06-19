@@ -147,7 +147,6 @@ $(document).ready(function () {
 <li><a href="#example-metropolis-hastings-vs-slice-sampling.-nimble-vs.jags.">Example: Metropolis-Hastings vs slice sampling. NIMBLE vs. JAGS.</a></li>
 <li><a href="#running-mcmcsuite-and-comparemcmcs">Running MCMCsuite and compareMCMCs</a></li>
 <li><a href="#viewing-the-comparisons">Viewing the comparisons</a></li>
-<li><a href="#add-stan-and-jags-for-litters">Add Stan and JAGS for litters?</a></li>
 </ul>
 </div>
 
@@ -174,21 +173,6 @@ $(document).ready(function () {
 <pre class="r"><code>littersInfo &lt;- list(code = littersCode,
                    constants = littersConsts,
                    data = littersData, inits = littersInits)
-
-## A function to replace default samplers with slice
-## samplers for requested nodes
-configureSlice &lt;- function(Rmodel, nodes) {
-    MCMCconf &lt;- configureMCMC(Rmodel) ## get a default configuration
-    ## print default samplers for illustration
-    MCMCconf$printSamplers(nodes)
-    for(node in nodes) {
-        MCMCconf$removeSamplers(node)
-        MCMCconf$addSampler(target = node, type = &quot;slice&quot;)
-    }
-    ## print modified samplers for illustration
-    MCMCconf$printSamplers(nodes)
-    MCMCconf
-}
 
 ## A configuration list for compareMCMCs
 MCMCdefs &lt;- list(
@@ -240,9 +224,6 @@ littersResults &lt;- MCMCsuite(
                            dir = &quot;litters_comparison_results&quot;,
                            modelNames = &quot;littersComparisons&quot;)</code></pre>
 <p>The results are <a href="litters_comparison_results/littersComparisons.html">here</a>.</p>
-</div>
-<div id="add-stan-and-jags-for-litters" class="section level1">
-<h1>Add Stan and JAGS for litters?</h1>
 </div>
 
 
