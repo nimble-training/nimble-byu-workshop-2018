@@ -17,7 +17,7 @@ Numerical Inference for statistical Models using Bayesian and Likelihood Estimat
 - A system for programming algorithms to be used on hierarchical models
 - A partial compiler for math, flow control, and related syntax in R
 
-We have an extensive website ([r-nimble.org](r-nimble.org)) with fairly comprehensive User Manual, examples, and other information.
+We have an extensive website ([https://r-nimble.org](r-nimble.org)) with fairly comprehensive User Manual, examples, and other information.
 
 # NIMBLE components
 
