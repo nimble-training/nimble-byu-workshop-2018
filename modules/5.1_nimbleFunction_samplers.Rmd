@@ -52,6 +52,7 @@ sampler_RW <- nimbleFunction(
         # 'scale', 'calcNodes' available because created in setup code
         propValue <- rnorm(1, mean = currentValue, sd = scale)
         model[[target]] <<- propValue
+        model$calculate(calcNodes)
         logMHR <- model$getLogProb(calcNodes) - logProbCurrent
         jump <- decide(logMHR)
         # make sure state of model is up-to-date and mvSaved has current iteration

@@ -88,6 +88,7 @@ NIMBLE Development Team
         <span class="co"># 'scale', 'calcNodes' available because created in setup code</span>
         propValue &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">1</span>, <span class="dt">mean =</span> currentValue, <span class="dt">sd =</span> scale)
         model[[target]] &lt;&lt;-<span class="st"> </span>propValue
+        model$<span class="kw">calculate</span>(calcNodes)
         logMHR &lt;-<span class="st"> </span>model$<span class="kw">getLogProb</span>(calcNodes) -<span class="st"> </span>logProbCurrent
         jump &lt;-<span class="st"> </span><span class="kw">decide</span>(logMHR)
         <span class="co"># make sure state of model is up-to-date and mvSaved has current iteration</span>
