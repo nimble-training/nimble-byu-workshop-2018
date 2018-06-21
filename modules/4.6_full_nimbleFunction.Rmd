@@ -121,16 +121,19 @@ cLittersMargModel <- compileNimble(littersMargModel)
 thin = 10
 littersMargConf <- configureMCMC(littersMargModel, print = TRUE, thin = thin)
 littersMargMCMC <- buildMCMC(littersMargConf)
+
+littersModel <- nimbleModel(littersCode, 
+          data = littersData, constants = littersConsts, inits = littersInits)
+
+## We can set up the new sampler without actually running the MCMC
+rMargSampler <- margSampler(littersModel, as.matrix(littersMargMCMC$mvSamples), 'p')
+
+cLittersModel <- compileNimble(littersModel)
 cLittersMargMCMC <- compileNimble(littersMargMCMC, project = littersMargModel)
 niter <- 5000
 nburnin <- 1000
 samplesMarginal <- runMCMC(cLittersMargMCMC, niter, nburnin)
 
-littersModel <- nimbleModel(littersCode, 
-          data = littersData, constants = littersConsts, inits = littersInits)
-cLittersModel <- compileNimble(littersModel)
-
-rMargSampler <- margSampler(littersModel, samplesMarginal, 'p')
 cMargSampler <- compileNimble(rMargSampler, project = littersModel)
 cMargSampler$run(samplesMarginal)
 fullSamples <- as.matrix(cMargSampler$newMV)
